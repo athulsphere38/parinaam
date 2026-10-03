@@ -37,7 +37,7 @@ function normalizeConnectionString(rawUrl?: string): string | undefined {
 }
 
 const cleanedDbUrl = normalizeConnectionString(process.env.DATABASE_URL);
-const IS_MOCK_MODE = !cleanedDbUrl && process.env.MOCK_DB === 'true';
+const IS_MOCK_MODE = (!cleanedDbUrl && process.env.MOCK_DB === 'true') || (!cleanedDbUrl && process.env.NODE_ENV === 'development');
 
 /**
  * The pg Pool is created only when DATABASE_URL is configured.
