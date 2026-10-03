@@ -81,7 +81,7 @@ export const Hero = () => {
 
             {/* Subtitle Statement */}
             <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed max-w-xl">
-              Two days of intense national hackathons, heavyweight steel robotics combat, live concerts, and cultural battles.
+              Two days. Tech, culture, music, and a lot of competition. 12 campus clubs, 35+ events, and over ₹3,00,000 in prizes.
             </p>
 
             {/* Date & Location Pill Summary */}
@@ -115,7 +115,7 @@ export const Hero = () => {
                 href="/events"
                 className="px-4 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-xs sm:text-base border border-fuchsia-800/80 transition-all text-center tracking-wide"
               >
-                EXPLORE COMPETITIONS
+                EXPLORE EVENTS
               </Link>
             </div>
 
@@ -166,14 +166,14 @@ export const Hero = () => {
               <div className="relative z-30 mt-3.5 px-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs font-mono text-slate-400 pointer-events-auto">
                 <span className="flex items-center gap-1.5 text-slate-300 text-[11px] sm:text-xs truncate min-w-0">
                   <Sparkles className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />
-                  <span className="truncate">MAIN ACADEMIC & INNOVATION COMPLEX</span>
+                  <span className="truncate">MAIN CAMPUS VENUE</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowVenueModal(true)}
                   className="relative z-30 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500/35 border border-fuchsia-500/50 hover:border-fuchsia-400 text-fuchsia-300 hover:text-white font-bold transition-all text-xs font-mono shadow-[0_0_15px_rgba(217,70,239,0.35)] hover:scale-105 active:scale-95 cursor-pointer pointer-events-auto select-none shrink-0"
                 >
-                  <span className="pointer-events-none">FESTIVAL VENUE</span>
+                  <span className="pointer-events-none">ABOUT VENUE</span>
                   <ExternalLink className="w-3.5 h-3.5 text-fuchsia-400 pointer-events-none" />
                 </button>
               </div>
@@ -188,7 +188,7 @@ export const Hero = () => {
         <div className="pt-10 border-t border-purple-900/50 grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-purple-950/50 p-5 rounded-2xl border border-purple-900/60 text-center hover:border-fuchsia-500/40 transition-all duration-200 ease-out hover:-translate-y-1.5">
             <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1.5">
-              Fest Countdown
+              Countdown
             </span>
             <div className="flex items-baseline justify-center gap-2 font-mono">
               <span className="text-2xl sm:text-3xl font-bold text-white">{mounted ? timeLeft.days : '0'}d</span>
@@ -200,7 +200,7 @@ export const Hero = () => {
 
           <div className="bg-purple-950/50 p-5 rounded-2xl border border-purple-900/60 text-center hover:border-amber-500/40 transition-all duration-200 ease-out hover:-translate-y-1.5">
             <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1.5">
-              National Prize Pool
+              Total Prize Pool
             </span>
             <span className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">
               {FEST_CONFIG.totalPrizePool}
@@ -209,7 +209,7 @@ export const Hero = () => {
 
           <div className="bg-purple-950/50 p-5 rounded-2xl border border-purple-900/60 text-center hover:border-cyan-500/40 transition-all duration-200 ease-out hover:-translate-y-1.5">
             <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1.5">
-              Official Campus Clubs
+              Participating Clubs
             </span>
             <span className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono">
               12 Active Clubs
@@ -250,10 +250,10 @@ export const Hero = () => {
                 Amrita Vishwa Vidyapeetham • Amaravati
               </span>
               <h3 className="text-xl sm:text-2xl font-bold text-white font-['Pixelify_Sans',_monospace] tracking-wide pt-1">
-                Explore Festival Venue?
+                Amrita Amaravati Campus
               </h3>
               <p className="text-sm sm:text-base text-slate-200 font-medium">
-                Do you want to see about festival venues?
+                Explore the campus and festival grounds?
               </p>
               <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
                 You will be redirected to the official Amrita Vishwa Vidyapeetham, Amaravati campus portal in a new tab.

@@ -456,7 +456,7 @@ export const GallerySection = () => {
                 {/* About Club */}
                 <div className="space-y-2">
                   <h4 className="text-xs font-mono font-bold uppercase text-purple-400 tracking-wider">
-                    Club Overview &amp; Legacy
+                    About the Club
                   </h4>
                   <p className="text-sm text-slate-200 leading-relaxed">
                     {activeItem.description}
@@ -466,7 +466,7 @@ export const GallerySection = () => {
                 {/* Highlight Caption */}
                 <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-800/40 space-y-1">
                   <span className="text-[10px] font-mono uppercase text-purple-300 font-bold block">
-                    Event Highlight:
+                    Highlight:
                   </span>
                   <p className="text-xs text-slate-300 italic font-sans leading-relaxed">
                     "{activeItem.caption}"
@@ -476,7 +476,7 @@ export const GallerySection = () => {
                 {/* Events List */}
                 <div className="space-y-2">
                   <h4 className="text-xs font-mono font-bold uppercase text-purple-400 tracking-wider">
-                    Signature Competitions &amp; Hackathons
+                    Key Events &amp; Competitions
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {activeItem.eventsConducted.map((evt, idx) => (
@@ -495,7 +495,7 @@ export const GallerySection = () => {
                 <div className="pt-2 text-[11px] font-mono text-emerald-400/90 border-t border-purple-950 flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-400" />
                   <span>
-                    Official club insignia, {currentPhotos.length > 0 ? `${currentPhotos.length} live event photos,` : ''} and archive verified.
+                    Photos and event archives from campus sessions.
                   </span>
                 </div>
               </div>
@@ -513,7 +513,7 @@ export const GallerySection = () => {
                   href="/events"
                   className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-900/30 flex items-center gap-1.5"
                 >
-                  <span>Explore Event Catalog →</span>
+                  <span>Browse Club Events →</span>
                 </Link>
               </div>
             </div>

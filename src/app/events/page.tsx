@@ -98,7 +98,7 @@ export default function EventsPage() {
 
         {/* Page header */}
         <div className="mb-10 space-y-2">
-          <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-widest">PARINAAM 2026 CATALOG</span>
+          <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-widest">EVENTS DIRECTORY</span>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-white">All Events &amp; Competitions</h1>
           <p className="text-slate-400 text-sm max-w-2xl">
             {total > 0 ? `${total} events across 12 clubs` : 'Browse events, view rulebooks, and register your team.'} Filter by club or category to discover what's happening.

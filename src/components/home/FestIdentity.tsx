@@ -158,7 +158,7 @@ export const FestIdentity = () => {
       icon: Calendar,
       label: 'FESTIVAL DATES',
       value: 'October 11-12, 2026',
-      description: '2 Days of non-stop action & energy',
+      description: 'Saturday & Sunday on campus',
       color: 'text-emerald-400',
       accent: 'border-emerald-500/30 bg-emerald-500/5',
     },
@@ -166,7 +166,7 @@ export const FestIdentity = () => {
       icon: ShieldCheck,
       label: 'DIGITAL ACCESS',
       value: 'Smart QR Pass',
-      description: 'Fast entry & club attendance verification',
+      description: 'One pass for entry & check-ins',
       color: 'text-pink-400',
       accent: 'border-pink-500/30 bg-pink-500/5',
     },
@@ -174,7 +174,7 @@ export const FestIdentity = () => {
       icon: Zap,
       label: 'MEGA STAGES',
       value: '4 Grand Arenas',
-      description: 'Live lawns, auditoriums & tech centers',
+      description: 'Auditoriums, lawns & tech labs',
       color: 'text-fuchsia-400',
       accent: 'border-fuchsia-500/30 bg-fuchsia-500/5',
     },
@@ -191,18 +191,18 @@ export const FestIdentity = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 relative z-10">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/60 border border-purple-500/40 text-xs font-mono text-purple-300 mb-4 shadow-lg shadow-purple-950/50 backdrop-blur-md">
           <Sparkles className="w-3.5 h-3.5 text-pink-400 animate-pulse shrink-0" />
-          <span className="truncate max-w-[280px] sm:max-w-none">OFFICIAL PRESENTATION • AMRITA VISHWA VIDYAPEETHAM</span>
+          <span className="truncate max-w-[280px] sm:max-w-none">AMRITA VISHWA VIDYAPEETHAM • AMARAVATI</span>
         </div>
 
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
           Two Days. One Campus.{' '}
           <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-fuchsia-300 bg-clip-text text-transparent">
-            Thousands of Stories.
+            Non-Stop Action.
           </span>
         </h2>
 
         <p className="mt-3 text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-          South India&apos;s premier national techno-cultural festival bringing together 12 collegiate clubs, 35+ competitive events, star pronites, and India&apos;s brightest collegiate talent.
+          From hackathons and robowars to music battles, design jams, and stage performances. Everything happening across Amrita Amaravati on October 11–12.
         </p>
       </div>
 

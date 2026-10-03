@@ -61,15 +61,15 @@ export const SponsorsSection = () => {
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/80 border border-purple-800/80 text-xs font-mono text-purple-300">
             <span className="w-2 h-2 rounded-full bg-fuchsia-400 animate-ping" />
-            <span className="font-bold tracking-wider uppercase">PARTNERSHIP SHOWCASE</span>
+            <span className="font-bold tracking-wider uppercase">SPONSORS & PARTNERS</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white font-display tracking-tight">
-            Sponsors <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-purple-300 to-amber-300">Upcoming</span>
+            Sponsors & <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-purple-300 to-amber-300">Partners</span>
           </h2>
 
           <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-            Parinaam 2026 is partnering with leading technology conglomerates, innovation labs, and startup incubators. Official tier reveals will be announced shortly.
+            We're partnering with tech companies, developer platforms, and local brands to support student events and prize pools. Full lineup announcing soon.
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export const SponsorsSection = () => {
                       {tier.tier}
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Tier partnership onboarding underway
+                      Partnership announcements coming soon
                     </p>
                   </div>
                 </div>
@@ -124,10 +124,10 @@ export const SponsorsSection = () => {
           
           <div className="space-y-2">
             <h4 className="text-xl sm:text-2xl font-extrabold text-white font-display">
-              Want to showcase your brand at PARINAAM 2026?
+              Interested in sponsoring Parinaam 2026?
             </h4>
             <p className="text-sm text-slate-300 max-w-xl mx-auto">
-              Connect directly with thousands of engineering minds, tech builders, and student innovators across India.
+              Put your brand in front of 3,000+ students, developers, and creators attending over the weekend.
             </p>
           </div>
 
@@ -136,7 +136,7 @@ export const SponsorsSection = () => {
               href="/sponsor"
               className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-fuchsia-600 hover:from-fuchsia-500 hover:to-purple-500 text-white font-bold text-sm tracking-wide uppercase font-mono shadow-[0_0_25px_rgba(217,70,239,0.5)] hover:shadow-[0_0_35px_rgba(217,70,239,0.8)] transition-all active:scale-95 border border-fuchsia-400/40 cursor-pointer text-center"
             >
-              <span>Partner With Us / Register as Sponsor</span>
+              <span>Partner With Us</span>
               <ArrowRight className="w-4 h-4 text-amber-300 animate-pulse" />
             </Link>
 
@@ -147,7 +147,7 @@ export const SponsorsSection = () => {
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-sm border border-purple-800/80 transition-all font-mono uppercase tracking-wider text-center"
             >
-              <span>Download 7-Page Brochure</span>
+              <span>Download Sponsorship Brochure</span>
             </a>
           </div>
 

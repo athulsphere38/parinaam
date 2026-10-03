@@ -89,13 +89,13 @@ export const FeaturedEvents = () => {
           <div className="space-y-3">
             <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>COMPETITIONS & CLUSTERS</span>
+              <span>EVENTS & COMPETITIONS</span>
             </span>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display">
-              Flagship Events & Competitions
+              Featured Competitions
             </h2>
             <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl font-normal">
-              Explore national 36-hour hackathons, steel robotics combat, LAN esports battles, and battle of bands on stage.
+              From 24-hour hackathons and robowars to esports battles and battle of the bands. Find your event and sign up.
             </p>
           </div>
 
@@ -103,7 +103,7 @@ export const FeaturedEvents = () => {
             href="/events"
             className="inline-flex items-center gap-2 text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors uppercase tracking-wide"
           >
-            <span>View All Competitions</span>
+            <span>Browse All Events</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -136,9 +136,9 @@ export const FeaturedEvents = () => {
             <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-purple-400">
               <Sparkles size={26} />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Club Events Releasing Soon</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Events are being scheduled</h3>
             <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed mb-6">
-              Our 12 clubs are currently preparing hackathons, robotics wars, and cultural competitions for Parinaam 2026.
+              The clubs are finalizing event details and rulebooks. Check back shortly or view the schedule.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link

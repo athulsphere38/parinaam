@@ -62,13 +62,13 @@ export default function SchedulePage() {
       
       <div className="space-y-3">
         <span className="text-xs font-pixel text-primary font-bold uppercase tracking-widest">
-          TIMELINE &amp; SLOTS
+          SCHEDULE
         </span>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white font-pixel">
-          Festival Schedule
+          Fest Schedule
         </h1>
         <p className="text-slate-400 text-sm font-pixel max-w-xl">
-          Plan your two days at Amrita campus. View event timing, venue blocks, and competition slots.
+          Two days of events, hackathons, workshops, and competitions. Find what's happening when and where.
         </p>
       </div>
 
