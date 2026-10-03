@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FEST_CONFIG } from '../../data/festData';
 import { ArrowRight, Calendar, MapPin, Trophy, Ticket, Flame, Building2, Sparkles, Zap, Users, ExternalLink, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { InteractiveHeroBackground } from './InteractiveHeroBackground';
 
 // Target Date: October 11, 2026, 09:00:00 AM IST
 const FEST_START_TIME = new Date('2026-10-11T09:00:00+05:30').getTime();
@@ -52,10 +53,8 @@ export const Hero = () => {
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 border-b border-purple-900/50 overflow-hidden fest-grid-bg bg-[#05030a]">
       
-      {/* Mood Indigo Ambient Spotlights */}
-      <div className="absolute top-1/4 left-1/4 w-[750px] h-[450px] bg-fuchsia-600/15 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-1/3 right-4 w-[650px] h-[550px] bg-purple-600/20 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
+      {/* Live Interactive Background (Dynamic Magnetic Particles, Laser Cursor Web, Shockwaves & Parallax Glows) */}
+      <InteractiveHeroBackground />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
         
