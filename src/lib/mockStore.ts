@@ -84,8 +84,22 @@ export interface MockEvent {
   updated_at: string;
 }
 
-// Fixed Password hash for 'Admin@123'
-const ADMIN_PASSWORD_HASH = '$2b$10$oVTYvxiKT8AVrgLI6FDkduvkxf7ZAOMPBLpJYn4PvqSgUO7lcUUIS';
+// Rotated Password hashes for pre-seeded admin accounts
+const ADMIN_PASSWORD_HASH_MAP: Record<string, string> = {
+  'superadmin@parinaam.fest': '$2b$10$NLnkrB2EK4AYMHNtqYqIKOiCfP3rZ4PsQ6LBMxrV6JdfuWWr6fcv.',
+  'admin.chakravyuha@parinaam.fest': '$2b$10$gowDh39DavUyMsIwgdsSJ.ne6GyYnJmaBwc.PtnNbXXF.TfxJAx2.',
+  'admin.prachurya@parinaam.fest': '$2b$10$6eZCx2UwK3vWZP3aOCA6RO2jxDQQFHDJ.8fuiexWxdi6RqX7kqVma',
+  'admin.relu@parinaam.fest': '$2b$10$rpt/ZVOPB6jvRbGiU56yp.zB4DdR/uV6/i5BVZu2jt35rFGoPUfpq',
+  'admin.avisruta@parinaam.fest': '$2b$10$.6tmBMKZZ3wc6sWYx5QU9.xuGLf8Z5F/GGpTW2m7bT4prjj6IptZS',
+  'admin.salesforce-agentblazer@parinaam.fest': '$2b$10$cPU06YSMOrZVqAvppW5imeSPns/MzbQMTXRx3VOaauaFElmQxc9y.',
+  'admin.saptaswara@parinaam.fest': '$2b$10$7kU1bkebQWhR6cPxBLzv/OnomEeVulrl0YzpeWbutEdbM9qyude8W',
+  'admin.robotics@parinaam.fest': '$2b$10$oUn3P1Uft2tlNHVaS7hDa.T.fEgAbu16XGyRQNszMgmkWg24QviF2',
+  'admin.ieee@parinaam.fest': '$2b$10$DJF6o79R/bayZksqsHZ0yO2xrk2jh8l3Dp9GJDO.o5hspfj391qIm',
+  'admin.avinya@parinaam.fest': '$2b$10$ak993rSAqlpWbKKoPcL4g.torohFc9QXXv9c7XbzApyjoK/mnf6.q',
+  'admin.adivika@parinaam.fest': '$2b$10$et4CkerIsga50Z6UB6NzN.S3BeMp3axL2QP50kB.q8graZQS2neuK',
+  'admin.nrityasparsh@parinaam.fest': '$2b$10$A7JiN/kPoLFbcCH0icklxO7D3ZnlRFV7F0iWnaf71DtLk/bx5EhBa',
+  'admin.drisya@parinaam.fest': '$2b$10$uPqAGonT6lHfdepaeeGwO.LAOPFMsIeQV1VLFlR3QxMOuKZ39Ta/C',
+};
 
 // 12 CLUBS
 const CLUBS_DATA: MockClub[] = [
@@ -109,7 +123,7 @@ const USERS_DATA: MockUser[] = [
   {
     id: 'usr-superadmin',
     email: 'superadmin@parinaam.fest',
-    password_hash: ADMIN_PASSWORD_HASH,
+    password_hash: ADMIN_PASSWORD_HASH_MAP['superadmin@parinaam.fest'],
     full_name: 'Parinaam Super Admin',
     phone: '+91 9999900000',
     role: 'super_admin',
@@ -125,24 +139,27 @@ const USERS_DATA: MockUser[] = [
     updated_at: new Date().toISOString(),
   },
   // 12 Club Admins
-  ...CLUBS_DATA.map((club, idx) => ({
-    id: `usr-admin-${club.slug}`,
-    email: `admin.${club.slug}@parinaam.fest`,
-    password_hash: ADMIN_PASSWORD_HASH,
-    full_name: `${club.name} Admin`,
-    phone: `+91 98888000${(idx + 1).toString().padStart(2, '0')}`,
-    role: 'club_admin' as const,
-    club_id: club.id,
-    college_name: 'Amrita Vishwa Vidyapeetham, Amaravati',
-    is_amrita_student: true,
-    verification_status: 'verified' as const,
-    platform_fee_paid: true,
-    qr_token: `qr-admin-${club.slug}-001`,
-    pass_type: 'ORGANIZER PASS',
-    email_verified: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  })),
+  ...CLUBS_DATA.map((club, idx) => {
+    const adminEmail = `admin.${club.slug}@parinaam.fest`;
+    return {
+      id: `usr-admin-${club.slug}`,
+      email: adminEmail,
+      password_hash: ADMIN_PASSWORD_HASH_MAP[adminEmail] || ADMIN_PASSWORD_HASH_MAP['superadmin@parinaam.fest'],
+      full_name: `${club.name} Admin`,
+      phone: `+91 98888000${(idx + 1).toString().padStart(2, '0')}`,
+      role: 'club_admin' as const,
+      club_id: club.id,
+      college_name: 'Amrita Vishwa Vidyapeetham, Amaravati',
+      is_amrita_student: true,
+      verification_status: 'verified' as const,
+      platform_fee_paid: true,
+      qr_token: `qr-admin-${club.slug}-001`,
+      pass_type: 'ORGANIZER PASS',
+      email_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }),
 ];
 
 // Flagship events seeded for development and testing

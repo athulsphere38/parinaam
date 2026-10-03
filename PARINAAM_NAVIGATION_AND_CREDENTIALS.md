@@ -28,7 +28,7 @@ Welcome to the newly structured URL directory and credential manual for **Parina
 The central command center for festival convenors and super administrators.
 
 - **Username / Email:** `superadmin@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Role:** `super_admin`
 
 ### Direct URLs for Super Admin
@@ -44,14 +44,14 @@ The central command center for festival convenors and super administrators.
 
 Each club has its own dedicated portal for managing events, reviewing attendee lists, exporting CSVs, and running the live venue QR scanner.
 
-> **Default Password for All Club Admins:** `Admin@123`  
+> **Password Status:** `Rotated (Secure)`  
 > *(When logging in with a club email, the system automatically redirects you to your club's dedicated `/admin/[clubSlug]` portal).*
 
 ---
 
 ### 1. Chakravyuha (Technical & Hackathons)
 - **Club Admin Email:** `admin.chakravyuha@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/chakravyuha`](http://localhost:3000/admin/chakravyuha)
 - **Create Event:** [`http://localhost:3000/admin/chakravyuha/events/new`](http://localhost:3000/admin/chakravyuha/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/chakravyuha/scan`](http://localhost:3000/admin/chakravyuha/scan)
@@ -61,7 +61,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 2. Prachurya (Cultural & Fine Arts)
 - **Club Admin Email:** `admin.prachurya@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/prachurya`](http://localhost:3000/admin/prachurya)
 - **Create Event:** [`http://localhost:3000/admin/prachurya/events/new`](http://localhost:3000/admin/prachurya/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/prachurya/scan`](http://localhost:3000/admin/prachurya/scan)
@@ -71,7 +71,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 3. ReLU (AI / ML & Data Science)
 - **Club Admin Email:** `admin.relu@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/relu`](http://localhost:3000/admin/relu)
 - **Create Event:** [`http://localhost:3000/admin/relu/events/new`](http://localhost:3000/admin/relu/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/relu/scan`](http://localhost:3000/admin/relu/scan)
@@ -81,7 +81,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 4. Avisruta (Music & Instrumental)
 - **Club Admin Email:** `admin.avisruta@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/avisruta`](http://localhost:3000/admin/avisruta)
 - **Create Event:** [`http://localhost:3000/admin/avisruta/events/new`](http://localhost:3000/admin/avisruta/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/avisruta/scan`](http://localhost:3000/admin/avisruta/scan)
@@ -91,7 +91,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 5. Salesforce AgentBlazer (Cloud & Enterprise Tech)
 - **Club Admin Email:** `admin.salesforce-agentblazer@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/salesforce-agentblazer`](http://localhost:3000/admin/salesforce-agentblazer)
 - **Create Event:** [`http://localhost:3000/admin/salesforce-agentblazer/events/new`](http://localhost:3000/admin/salesforce-agentblazer/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/salesforce-agentblazer/scan`](http://localhost:3000/admin/salesforce-agentblazer/scan)
@@ -101,7 +101,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 6. Saptaswara (Performing Arts & Classical)
 - **Club Admin Email:** `admin.saptaswara@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/saptaswara`](http://localhost:3000/admin/saptaswara)
 - **Create Event:** [`http://localhost:3000/admin/saptaswara/events/new`](http://localhost:3000/admin/saptaswara/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/saptaswara/scan`](http://localhost:3000/admin/saptaswara/scan)
@@ -111,7 +111,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 7. Robotics (Robotics & Hardware Design)
 - **Club Admin Email:** `admin.robotics@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/robotics`](http://localhost:3000/admin/robotics)
 - **Create Event:** [`http://localhost:3000/admin/robotics/events/new`](http://localhost:3000/admin/robotics/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/robotics/scan`](http://localhost:3000/admin/robotics/scan)
@@ -121,7 +121,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 8. IEEE (Electrical & Hardware Engineering)
 - **Club Admin Email:** `admin.ieee@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/ieee`](http://localhost:3000/admin/ieee)
 - **Create Event:** [`http://localhost:3000/admin/ieee/events/new`](http://localhost:3000/admin/ieee/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/ieee/scan`](http://localhost:3000/admin/ieee/scan)
@@ -131,7 +131,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 9. Avinya (Innovation & Startups)
 - **Club Admin Email:** `admin.avinya@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/avinya`](http://localhost:3000/admin/avinya)
 - **Create Event:** [`http://localhost:3000/admin/avinya/events/new`](http://localhost:3000/admin/avinya/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/avinya/scan`](http://localhost:3000/admin/avinya/scan)
@@ -141,7 +141,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 10. Adivika (Cultural Heritage & Theatre)
 - **Club Admin Email:** `admin.adivika@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/adivika`](http://localhost:3000/admin/adivika)
 - **Create Event:** [`http://localhost:3000/admin/adivika/events/new`](http://localhost:3000/admin/adivika/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/adivika/scan`](http://localhost:3000/admin/adivika/scan)
@@ -151,7 +151,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 11. Nrityasparsh (Dance & Choreography)
 - **Club Admin Email:** `admin.nrityasparsh@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/nrityasparsh`](http://localhost:3000/admin/nrityasparsh)
 - **Create Event:** [`http://localhost:3000/admin/nrityasparsh/events/new`](http://localhost:3000/admin/nrityasparsh/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/nrityasparsh/scan`](http://localhost:3000/admin/nrityasparsh/scan)
@@ -161,7 +161,7 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 
 ### 12. Drisya (Film, Photography & Visual Media)
 - **Club Admin Email:** `admin.drisya@parinaam.fest`
-- **Password:** `Admin@123`
+- **Password:** `[Rotated (Secure)]`
 - **Admin Portal URL:** [`http://localhost:3000/admin/drisya`](http://localhost:3000/admin/drisya)
 - **Create Event:** [`http://localhost:3000/admin/drisya/events/new`](http://localhost:3000/admin/drisya/events/new)
 - **QR Venue Scanner:** [`http://localhost:3000/admin/drisya/scan`](http://localhost:3000/admin/drisya/scan)
