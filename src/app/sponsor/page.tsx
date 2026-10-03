@@ -97,6 +97,7 @@ export default function SponsorRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionId, setSubmissionId] = useState('');
+  const [submittedStatus, setSubmittedStatus] = useState<string>('PENDING');
 
   const selectedPackage =
     SPONSOR_PACKAGES.find((pkg) => pkg.id === formData.tier) || SPONSOR_PACKAGES[1];
@@ -140,7 +141,8 @@ export default function SponsorRegistrationPage() {
       const data = await res.json();
 
       if (data.success && data.data) {
-        setSubmissionId(data.data.application_id);
+        setSubmissionId(data.data.application_id || '');
+        setSubmittedStatus(data.data.status || 'PENDING');
         setIsSubmitted(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -156,6 +158,7 @@ export default function SponsorRegistrationPage() {
 
   const resetForm = () => {
     setIsSubmitted(false);
+    setSubmittedStatus('PENDING');
     setFormData({
       companyName: '',
       contactPerson: '',
@@ -200,25 +203,43 @@ export default function SponsorRegistrationPage() {
 
         {/* Success View */}
         {isSubmitted ? (
-          <div className="bg-[#0c091d]/90 border border-emerald-500/40 rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] backdrop-blur-md">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+          <div className="bg-[#0c091d]/90 border border-purple-500/40 rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-[0_0_50px_rgba(168,85,247,0.2)] backdrop-blur-md">
+            <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/40 text-fuchsia-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 size={36} />
             </div>
             
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-white font-sans tracking-tight">
-                Sponsorship Registration Received!
+                {submittedStatus === 'CONFIRMED'
+                  ? 'Sponsorship Application Confirmed!'
+                  : submittedStatus === 'REJECTED'
+                  ? 'Sponsorship Application Reviewed'
+                  : 'Sponsorship Application Submitted'}
               </h2>
               <p className="text-sm text-slate-300">
                 Thank you, <span className="font-semibold text-white">{formData.contactPerson || 'Partner'}</span>. 
-                Your registration for <span className="font-semibold text-fuchsia-300">{formData.companyName}</span> has been logged into the festival desk.
+                {submittedStatus === 'CONFIRMED'
+                  ? ` Your sponsorship for ${formData.companyName} has been officially confirmed by Super Admin.`
+                  : ` Your sponsorship application for ${formData.companyName} has been successfully submitted and is now pending review by the Parinaam Super Admin team.`}
               </p>
             </div>
 
             <div className="bg-black/60 border border-purple-900/50 rounded-xl p-4 text-left font-mono text-xs space-y-2.5 text-slate-300">
               <div className="flex justify-between border-b border-purple-900/40 pb-2">
                 <span className="text-slate-500">REFERENCE ID:</span>
-                <span className="text-emerald-400 font-bold">{submissionId}</span>
+                <span className="text-fuchsia-400 font-bold">{submissionId}</span>
+              </div>
+              <div className="flex justify-between border-b border-purple-900/40 pb-2">
+                <span className="text-slate-500">APPLICATION STATUS:</span>
+                <span className={`font-bold px-2 py-0.5 rounded uppercase border text-[11px] ${
+                  submittedStatus === 'CONFIRMED'
+                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                    : submittedStatus === 'REJECTED'
+                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                    : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                }`}>
+                  {submittedStatus === 'CONFIRMED' ? 'CONFIRMED' : submittedStatus === 'REJECTED' ? 'REJECTED' : 'PENDING REVIEW'}
+                </span>
               </div>
               <div className="flex justify-between border-b border-purple-900/40 pb-2">
                 <span className="text-slate-500">CHOSEN PACKAGE:</span>
@@ -259,17 +280,17 @@ export default function SponsorRegistrationPage() {
             <div className="p-4 bg-purple-950/50 border border-purple-500/30 rounded-xl text-xs text-purple-200 text-left flex items-start gap-3">
               <Clock size={16} className="text-fuchsia-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-white mb-0.5">MoU &amp; Help Desk Notice</p>
-                Our festival relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, tax invoice guidelines, and MoU agreement.
+                <p className="font-semibold text-white mb-0.5">Super Admin Review &amp; MoU Notice</p>
+                Our Corporate Relations &amp; Super Admin team will review your application within <strong>24 business hours</strong> and contact you regarding proposal deck verification, tax invoice guidelines, and formal MoU agreement.
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <button
                 onClick={resetForm}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-purple-500/30 text-sm font-medium hover:bg-purple-950/40 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-purple-500/30 text-sm font-medium hover:bg-purple-950/40 transition-colors cursor-pointer text-slate-200"
               >
-                Register Another Package
+                Submit Another Application
               </button>
               <Link
                 href="/"
