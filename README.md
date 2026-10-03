@@ -118,30 +118,30 @@ This platform provides an end-to-end digital operating system for the festival:
 
 ---
 
-## 🔐 Administrative Roles & Default Credentials
+## 🔐 Administrative Roles & Account Access
 
-All pre-seeded admin accounts are active with the default password: **`Admin@123`**
+All administrative accounts have undergone mandatory security credential rotation. Plaintext passwords are strictly prohibited in documentation and code.
 
 ### 1. Super Admin Account
 - **Email:** `superadmin@parinaam.fest`
-- **Password:** `Admin@123`
+- **Credential Status:** `Credential Rotated (Secure)`
 - **Dashboard URL:** [`http://localhost:3000/superadmin`](http://localhost:3000/superadmin)
 
 ### 2. Club Admin Accounts
-| Club | Admin Email | Default Password | Direct Portal URL |
+| Club | Admin Email | Credential Status | Direct Portal URL |
 |---|---|---|---|
-| **Chakravyuha** | `admin.chakravyuha@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/chakravyuha`](http://localhost:3000/admin/chakravyuha) |
-| **Prachurya** | `admin.prachurya@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/prachurya`](http://localhost:3000/admin/prachurya) |
-| **ReLU** | `admin.relu@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/relu`](http://localhost:3000/admin/relu) |
-| **Avisruta** | `admin.avisruta@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/avisruta`](http://localhost:3000/admin/avisruta) |
-| **Salesforce AgentBlazer** | `admin.salesforce-agentblazer@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/salesforce-agentblazer`](http://localhost:3000/admin/salesforce-agentblazer) |
-| **Saptaswara** | `admin.saptaswara@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/saptaswara`](http://localhost:3000/admin/saptaswara) |
-| **Robotics** | `admin.robotics@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/robotics`](http://localhost:3000/admin/robotics) |
-| **IEEE** | `admin.ieee@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/ieee`](http://localhost:3000/admin/ieee) |
-| **Avinya** | `admin.avinya@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/avinya`](http://localhost:3000/admin/avinya) |
-| **Adivika** | `admin.adivika@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/adivika`](http://localhost:3000/admin/adivika) |
-| **Nrityasparsh** | `admin.nrityasparsh@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/nrityasparsh`](http://localhost:3000/admin/nrityasparsh) |
-| **Drisya** | `admin.drisya@parinaam.fest` | `Admin@123` | [`http://localhost:3000/admin/drisya`](http://localhost:3000/admin/drisya) |
+| **Chakravyuha** | `admin.chakravyuha@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/chakravyuha`](http://localhost:3000/admin/chakravyuha) |
+| **Prachurya** | `admin.prachurya@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/prachurya`](http://localhost:3000/admin/prachurya) |
+| **ReLU** | `admin.relu@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/relu`](http://localhost:3000/admin/relu) |
+| **Avisruta** | `admin.avisruta@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/avisruta`](http://localhost:3000/admin/avisruta) |
+| **Salesforce AgentBlazer** | `admin.salesforce-agentblazer@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/salesforce-agentblazer`](http://localhost:3000/admin/salesforce-agentblazer) |
+| **Saptaswara** | `admin.saptaswara@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/saptaswara`](http://localhost:3000/admin/saptaswara) |
+| **Robotics** | `admin.robotics@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/robotics`](http://localhost:3000/admin/robotics) |
+| **IEEE** | `admin.ieee@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/ieee`](http://localhost:3000/admin/ieee) |
+| **Avinya** | `admin.avinya@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/avinya`](http://localhost:3000/admin/avinya) |
+| **Adivika** | `admin.adivika@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/adivika`](http://localhost:3000/admin/adivika) |
+| **Nrityasparsh** | `admin.nrityasparsh@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/nrityasparsh`](http://localhost:3000/admin/nrityasparsh) |
+| **Drisya** | `admin.drisya@parinaam.fest` | `Credential Rotated (Secure)` | [`http://localhost:3000/admin/drisya`](http://localhost:3000/admin/drisya) |
 
 ---
 

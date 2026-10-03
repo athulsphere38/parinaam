@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
               u.college_name, u.is_amrita_student, u.roll_number, u.department,
               u.year_of_study, u.city, u.id_card_url, u.verification_status,
               u.platform_fee_paid, u.qr_token, u.pass_type, u.avatar_url,
-              u.email_verified, u.created_at,
+              u.email_verified, u.created_at, u.updated_at,
               c.name as club_name, c.slug as club_slug
        FROM users u
        LEFT JOIN clubs c ON u.club_id = c.id
@@ -24,7 +24,19 @@ export async function GET(req: NextRequest) {
 
     if (result.rows.length === 0) return unauthorized('User not found');
 
-    const res = success({ user: result.rows[0] });
+    const dbUser = result.rows[0];
+
+    // Invalidate pre-rotation sessions for admin users
+    if (dbUser.role === 'super_admin' || dbUser.role === 'club_admin') {
+      const userUpdatedAtSec = Math.floor(new Date(dbUser.updated_at).getTime() / 1000);
+      if (session.iat && dbUser.updated_at && session.iat < userUpdatedAtSec) {
+        const unauthRes = unauthorized('Session expired due to credential rotation. Please sign in again.');
+        unauthRes.cookies.set(COOKIE_NAME, '', { httpOnly: true, maxAge: 0, path: '/' });
+        return unauthRes;
+      }
+    }
+
+    const res = success({ user: dbUser });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     return res;
   } catch (err) {

@@ -271,11 +271,11 @@ ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================
 -- SEED: SUPER ADMIN & 12 CLUB ADMINS
--- Password for all default accounts: Admin@123
+-- Pre-seeded admin accounts with rotated bcrypt hashes
 -- ============================================================
 INSERT INTO users (email, password_hash, full_name, role, is_amrita_student, email_verified, verification_status)
 VALUES 
-  ('superadmin@parinaam.fest', '$2b$10$oVTYvxiKT8AVrgLI6FDkduvkxf7ZAOMPBLpJYn4PvqSgUO7lcUUIS', 'Parinaam Super Admin', 'super_admin', TRUE, TRUE, 'verified')
+  ('superadmin@parinaam.fest', '$2b$10$NLnkrB2EK4AYMHNtqYqIKOiCfP3rZ4PsQ6LBMxrV6JdfuWWr6fcv.', 'Parinaam Super Admin', 'super_admin', TRUE, TRUE, 'verified')
 ON CONFLICT (email) DO NOTHING;
 
 -- 12 Club Admins mapped to their respective clubs

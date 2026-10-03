@@ -7,7 +7,8 @@ const pool = new Pool({
 });
 
 async function seed() {
-  const hash = await bcrypt.hash('Admin@123', 10);
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Super@8472';
+  const hash = await bcrypt.hash(adminPassword, 10);
   
   // 1. Seed Super Admin
   await pool.query(`
@@ -15,7 +16,7 @@ async function seed() {
     VALUES ($1, $2, $3, $4, true, $5, true, true)
     ON CONFLICT (email) DO UPDATE SET password_hash = $2, role = $4
   `, ['superadmin@parinaam.fest', hash, 'Parinaam Super Admin', 'super_admin', 'verified']);
-  console.log('✓ Super Admin Seeded in RDS: superadmin@parinaam.fest / Admin@123');
+  console.log('✓ Super Admin Seeded in RDS: superadmin@parinaam.fest (Credential Rotated)');
 
   // 2. Seed 12 Club Admins
   const clubs = await pool.query('SELECT id, name, slug FROM clubs');

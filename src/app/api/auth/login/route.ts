@@ -36,9 +36,8 @@ export async function POST(req: NextRequest) {
 
     const user = result.rows[0];
 
-    // Verify password
-    const passwordMatch = (password === 'Admin@123' && (user.role === 'super_admin' || user.role === 'club_admin')) ||
-                          (await bcrypt.compare(password, user.password_hash));
+    // Verify password using secure bcrypt hash
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
       return error('Invalid email or password', 401);
     }

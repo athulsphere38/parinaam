@@ -297,7 +297,9 @@ const pool = new Pool({
 });
 
 async function seed() {
-  const hash = await bcrypt.hash("Admin@123", 10);
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminPassword) throw new Error("ADMIN_SEED_PASSWORD environment variable required");
+  const hash = await bcrypt.hash(adminPassword, 10);
   
   // 1. Seed Super Admin
   await pool.query(`
@@ -305,7 +307,7 @@ async function seed() {
     VALUES ($1, $2, $3, $4, true, $5, true, true)
     ON CONFLICT (email) DO UPDATE SET password_hash = $2, role = $4
   `, ["superadmin@parinaam.fest", hash, "Parinaam Super Admin", "super_admin", "verified"]);
-  console.log("✓ Super Admin Seeded: superadmin@parinaam.fest / Admin@123");
+  console.log("✓ Super Admin Seeded: superadmin@parinaam.fest");
 
   // 2. Fetch clubs to link club admins
   const clubs = await pool.query("SELECT id, name, slug FROM clubs");
@@ -550,8 +552,8 @@ Now, whenever you want to deploy an update, just connect to EC2 and run:
 | Check | How to Verify | Expected Result |
 |---|---|---|
 | **HTTPS Web Access** | Visit `https://parinaam.online` | Loads hero page with SSL padlock 🔒 |
-| **Super Admin Login** | Visit `https://parinaam.online/superadmin` | Log in with `superadmin@parinaam.fest` / `Admin@123` |
-| **Club Admin Portal** | Visit `https://parinaam.online/admin/chakravyuha` | Log in with `admin.chakravyuha@parinaam.fest` / `Admin@123` |
+| **Super Admin Login** | Visit `https://parinaam.online/superadmin` | Log in with `superadmin@parinaam.fest` / `[Rotated Credential]` |
+| **Club Admin Portal** | Visit `https://parinaam.online/admin/chakravyuha` | Log in with `admin.chakravyuha@parinaam.fest` / `[Rotated Credential]` |
 | **Database Connectivity** | Run `psql $DATABASE_URL -c "SELECT count(*) FROM clubs;"` | Returns `12` |
 | **Server Health** | Run `pm2 status` | All cluster instances show `online` status |
 | **Nginx Access Logs** | `sudo tail -f /var/log/nginx/access.log` | Displays real-time requests with status `200` |
