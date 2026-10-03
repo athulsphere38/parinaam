@@ -59,21 +59,35 @@ export function isValidEmail(email: string | null | undefined): boolean {
 /**
  * Maximum character length allowed for student names across the platform
  */
-export const MAX_STUDENT_NAME_LENGTH = 16;
+export const MAX_STUDENT_NAME_LENGTH = 30;
 
 /**
- * Validates student name length (max 16 characters) and non-empty status
+ * Validates student name regex:
+ * - Alphabetic characters and single spaces between words only
+ * - Pattern: ^[A-Za-z]+(?: [A-Za-z]+)*$
+ * - Rejects numbers, special characters, leading/trailing spaces, and consecutive spaces
+ */
+export const STUDENT_NAME_REGEX = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+
+/**
+ * Validates student name length (max 30 characters), non-empty status, and alphabetic/space pattern
  */
 export function isValidStudentName(name: string | null | undefined): { valid: boolean; error?: string } {
-  const trimmed = name?.trim() || '';
-  if (!trimmed) {
+  if (!name || typeof name !== 'string') {
     return { valid: false, error: 'Student name is required' };
   }
-  if (trimmed.length > MAX_STUDENT_NAME_LENGTH) {
+  if (name.length > MAX_STUDENT_NAME_LENGTH) {
     return {
       valid: false,
-      error: `Student name must not exceed ${MAX_STUDENT_NAME_LENGTH} characters (currently ${trimmed.length})`,
+      error: `Student name must not exceed ${MAX_STUDENT_NAME_LENGTH} characters (currently ${name.length})`,
+    };
+  }
+  if (!STUDENT_NAME_REGEX.test(name)) {
+    return {
+      valid: false,
+      error: 'Student name must contain letters only with single spaces between words (no numbers, special characters, or leading/trailing/extra spaces)',
     };
   }
   return { valid: true };
 }
+

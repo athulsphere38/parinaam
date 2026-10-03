@@ -689,6 +689,8 @@ export default function RegisterPage() {
                     <input
                       type="text"
                       maxLength={MAX_STUDENT_NAME_LENGTH}
+                      pattern="^[A-Za-z]+(?: [A-Za-z]+)*$"
+                      required
                       value={form.full_name}
                       onChange={e => set('full_name', e.target.value.slice(0, MAX_STUDENT_NAME_LENGTH))}
                       placeholder="e.g. Rahul Sharma"
