@@ -522,7 +522,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Top KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <p className="text-slate-400 text-xs font-medium">Total Registered</p>
             <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
@@ -560,7 +560,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 flex-wrap">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex gap-2 flex-wrap">
               {/* Institution */}
               <select
                 value={typeFilter}

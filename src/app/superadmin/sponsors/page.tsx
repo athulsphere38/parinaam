@@ -486,7 +486,7 @@ export default function SuperAdminSponsorsPage() {
                 </div>
 
                 {/* Modal Content */}
-                <div className="p-5 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1 custom-scrollbar">
 
                   {actionError && (
                     <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-semibold">

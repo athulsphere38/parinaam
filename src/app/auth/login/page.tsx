@@ -71,7 +71,7 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10"
       >
         {/* Card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm shadow-2xl">
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">

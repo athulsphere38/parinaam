@@ -322,7 +322,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-3 sm:pl-10">
         <div className="w-screen max-w-md bg-[#0a0714] border-l border-purple-900/50 text-white shadow-2xl flex flex-col justify-between">
           
           {/* Header */}
