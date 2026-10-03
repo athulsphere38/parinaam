@@ -325,6 +325,12 @@ export default function SuperAdminDashboard() {
               <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} /> Refresh
             </button>
             <Link
+              href="/superadmin/sponsors"
+              className="flex items-center gap-1.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
+            >
+              <Building2 size={14} /> Sponsor Apps
+            </Link>
+            <Link
               href="/superadmin/transactions"
               className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
             >
@@ -390,6 +396,12 @@ export default function SuperAdminDashboard() {
               {t.label}
             </button>
           ))}
+          <Link
+            href="/superadmin/sponsors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-fuchsia-300 hover:text-white flex items-center gap-1.5 bg-fuchsia-500/10 border border-fuchsia-500/20 hover:bg-fuchsia-500/20"
+          >
+            <Building2 size={12} /> Sponsor Applications →
+          </Link>
           <Link
             href="/superadmin/transactions"
             className="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-amber-300 hover:text-white flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20"

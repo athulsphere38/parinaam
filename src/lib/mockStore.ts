@@ -156,6 +156,7 @@ class MockDbEngine {
   registrations: any[] = [];
   attendance: any[] = [];
   payments: any[] = [];
+  sponsorship_applications: any[] = [];
   config: Record<string, string> = {
     platform_fee: '99',
     fest_name: 'PARINAAM 2026',
@@ -987,6 +988,61 @@ class MockDbEngine {
       }
 
       return { rows: [event], rowCount: 1 };
+    }
+
+    // 24. SPONSORSHIP APPLICATIONS (INSERT, SELECT, UPDATE)
+    if (qLower.includes('sponsorship_applications')) {
+      if (qLower.startsWith('insert into sponsorship_applications')) {
+        const app = {
+          id: uuidv4(),
+          company_name: params[0] || 'Company',
+          contact_person: params[1] || 'Contact',
+          email: params[2] || '',
+          phone: params[3] || '',
+          designation: params[4] || null,
+          website: params[5] || null,
+          tier: params[6] || 'co_sponsor',
+          budget: params[7] || null,
+          message: params[8] || null,
+          status: 'PENDING',
+          reviewed_note: null,
+          reviewed_by: null,
+          reviewed_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        this.sponsorship_applications.unshift(app);
+        return { rows: [app], rowCount: 1 };
+      }
+
+      if (qLower.startsWith('select count(*)')) {
+        let list = [...this.sponsorship_applications];
+        if (qLower.includes("status = 'pending'")) list = list.filter(a => a.status === 'PENDING');
+        if (qLower.includes("status = 'confirmed'")) list = list.filter(a => a.status === 'CONFIRMED');
+        if (qLower.includes("status = 'rejected'")) list = list.filter(a => a.status === 'REJECTED');
+        return { rows: [{ count: list.length.toString(), total_count: list.length, pending_count: list.filter(a => a.status === 'PENDING').length, confirmed_count: list.filter(a => a.status === 'CONFIRMED').length, rejected_count: list.filter(a => a.status === 'REJECTED').length }], rowCount: 1 };
+      }
+
+      if (qLower.startsWith('select') && qLower.includes('from sponsorship_applications')) {
+        let list = [...this.sponsorship_applications];
+        const statusParam = params.find(p => typeof p === 'string' && ['PENDING', 'CONFIRMED', 'REJECTED'].includes(p.toUpperCase()));
+        if (statusParam) {
+          list = list.filter(a => a.status === statusParam.toUpperCase());
+        }
+        return { rows: list, rowCount: list.length };
+      }
+
+      if (qLower.startsWith('update sponsorship_applications')) {
+        const app = this.sponsorship_applications.find(a => a.id === params[3] || a.id === params[0] || a.id === params[params.length - 1]);
+        if (app) {
+          app.status = params[0] || app.status;
+          app.reviewed_note = params[1] || app.reviewed_note;
+          app.reviewed_by = params[2] || app.reviewed_by;
+          app.reviewed_at = new Date().toISOString();
+          app.updated_at = new Date().toISOString();
+          return { rows: [app], rowCount: 1 };
+        }
+      }
     }
 
     // Generic fallback for updates & deletes

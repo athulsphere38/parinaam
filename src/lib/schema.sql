@@ -309,3 +309,34 @@ CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_registrations_updated_at BEFORE UPDATE ON registrations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- SPONSORSHIP APPLICATIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS sponsorship_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name VARCHAR(255) NOT NULL,
+  contact_person VARCHAR(200) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(30) NOT NULL,
+  designation VARCHAR(150),
+  website TEXT,
+  tier VARCHAR(50) NOT NULL,
+  budget VARCHAR(100),
+  message TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'CONFIRMED', 'REJECTED')),
+  reviewed_note TEXT,
+  reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sponsorship_apps_status ON sponsorship_applications(status);
+CREATE INDEX IF NOT EXISTS idx_sponsorship_apps_created_at ON sponsorship_applications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sponsorship_apps_email ON sponsorship_applications(email);
+
+CREATE TRIGGER update_sponsorship_applications_updated_at BEFORE UPDATE ON sponsorship_applications
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
