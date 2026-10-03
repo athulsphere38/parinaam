@@ -248,9 +248,9 @@ export const GallerySection = () => {
   const currentPhoto = currentPhotos[modalSlideIdx];
 
   return (
-    <section id="gallery" className="py-24 bg-[#070410] border-b border-purple-900/30 relative">
+    <section id="gallery" className="py-24 bg-[#070410] border-b border-purple-900/30 relative overflow-hidden w-full max-w-full">
       {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-900/10 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 sm:w-96 lg:w-[700px] h-64 sm:h-96 lg:h-[350px] bg-purple-900/10 blur-[100px] sm:blur-[120px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10">
         {/* Section Header */}

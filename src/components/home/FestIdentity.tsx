@@ -181,17 +181,17 @@ export const FestIdentity = () => {
   ];
 
   return (
-    <section className="relative py-20 bg-[#05030a] overflow-hidden border-y border-purple-900/40">
+    <section className="relative py-20 bg-[#05030a] overflow-hidden w-full max-w-full border-y border-purple-900/40">
       {/* Background Ambience Glows */}
       <div className="absolute inset-0 pointer-events-none fest-grid-bg opacity-40" />
-      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-pink-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-purple-600/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-pink-600/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
 
       {/* Section Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 relative z-10">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/60 border border-purple-500/40 text-xs font-mono text-purple-300 mb-4 shadow-lg shadow-purple-950/50 backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 text-pink-400 animate-pulse" />
-          <span>OFFICIAL PRESENTATION • AMRITA VISHWA VIDYAPEETHAM</span>
+          <Sparkles className="w-3.5 h-3.5 text-pink-400 animate-pulse shrink-0" />
+          <span className="truncate max-w-[280px] sm:max-w-none">OFFICIAL PRESENTATION • AMRITA VISHWA VIDYAPEETHAM</span>
         </div>
 
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
@@ -207,13 +207,13 @@ export const FestIdentity = () => {
       </div>
 
       {/* Marquee Wrapper with Smooth Edge Fades */}
-      <div className="relative w-full marquee-container space-y-6">
+      <div className="relative w-full max-w-full overflow-hidden shrink-0 marquee-container space-y-6">
         {/* Left & Right Gradient Shadows for Seamless Look */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-44 bg-gradient-to-r from-[#05030a] via-[#05030a]/80 to-transparent z-20 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-44 bg-gradient-to-l from-[#05030a] via-[#05030a]/80 to-transparent z-20 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-r from-[#05030a] via-[#05030a]/80 to-transparent z-20 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-l from-[#05030a] via-[#05030a]/80 to-transparent z-20 pointer-events-none" />
 
         {/* ─── TRACK 1: Leftward Infinite Marquee (Logos & Flagships) ─── */}
-        <div className="overflow-hidden flex py-1">
+        <div className="overflow-hidden w-full max-w-full shrink-0 flex py-1">
           <div className="animate-marquee-left flex items-stretch gap-5 sm:gap-6 pr-5 sm:pr-6">
             {/* Duplicated twice for flawless seamless infinite loop */}
             {[...brandCards, ...brandCards].map((card, idx) => {
@@ -276,7 +276,7 @@ export const FestIdentity = () => {
         </div>
 
         {/* ─── TRACK 2: Rightward Infinite Marquee (Stats & Pillars) ─── */}
-        <div className="overflow-hidden flex py-1">
+        <div className="overflow-hidden w-full max-w-full shrink-0 flex py-1">
           <div className="animate-marquee-right flex items-center gap-4 sm:gap-5 pr-4 sm:pr-5">
             {/* Duplicated twice for flawless seamless infinite loop */}
             {[...highlightCards, ...highlightCards, ...highlightCards].map((item, idx) => {
