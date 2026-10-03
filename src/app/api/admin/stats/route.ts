@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
       totalRegistrations,
       confirmedRegistrations,
       totalRevenue,
+      paymentStats,
       checkinsCount,
       branchStats,
       yearStats,
@@ -35,6 +36,17 @@ export async function GET(req: NextRequest) {
       db.query(`SELECT COUNT(*) FROM registrations`),
       db.query(`SELECT COUNT(*) FROM registrations WHERE status = 'CONFIRMED'`),
       db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'paid'`),
+      db.query(`
+        SELECT 
+          COUNT(*) as total_payments,
+          COUNT(*) FILTER (WHERE status = 'paid') as paid_count,
+          COUNT(*) FILTER (WHERE status = 'created') as created_count,
+          COUNT(*) FILTER (WHERE status = 'failed') as failed_count,
+          COUNT(*) FILTER (WHERE status = 'refunded') as refunded_count,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND type = 'platform_fee'), 0) as platform_revenue_paise,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND type = 'event_fee'), 0) as event_revenue_paise
+        FROM payments
+      `),
       db.query(`SELECT COUNT(*) FROM attendance`),
       db.query(`
         SELECT department, COUNT(*) as count 
@@ -112,6 +124,8 @@ export async function GET(req: NextRequest) {
       `),
     ]);
 
+    const pRow = paymentStats.rows[0] || {};
+
     return success({
       overview: {
         total_students: parseInt(usersCount.rows[0]?.count || '0'),
@@ -124,6 +138,12 @@ export async function GET(req: NextRequest) {
         total_checkins: parseInt(checkinsCount.rows[0]?.count || '0'),
         total_revenue_paise: parseInt(totalRevenue.rows[0]?.total || '0'),
         total_revenue_inr: Math.round(parseInt(totalRevenue.rows[0]?.total || '0') / 100),
+        paid_payments_count: parseInt(pRow.paid_count || '0'),
+        created_payments_count: parseInt(pRow.created_count || '0'),
+        failed_payments_count: parseInt(pRow.failed_count || '0'),
+        refunded_payments_count: parseInt(pRow.refunded_count || '0'),
+        platform_revenue_inr: Math.round(parseInt(pRow.platform_revenue_paise || '0') / 100),
+        event_revenue_inr: Math.round(parseInt(pRow.event_revenue_paise || '0') / 100),
       },
       branch_stats: branchStats.rows,
       year_stats: yearStats.rows,
