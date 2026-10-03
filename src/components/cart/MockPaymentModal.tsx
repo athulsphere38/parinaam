@@ -121,7 +121,7 @@ export const MockPaymentModal: React.FC<MockPaymentModalProps> = ({
             </button>
           </div>
         ) : (
-          <div className="p-6 overflow-y-auto space-y-5">
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5">
             {/* Grand Total Box */}
             <div className="p-4 rounded-2xl bg-purple-900/20 border border-purple-500/30 flex items-center justify-between">
               <div>

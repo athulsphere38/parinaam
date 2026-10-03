@@ -573,7 +573,7 @@ export default function SuperAdminTransactionsPage() {
                 </div>
 
                 {/* Modal Content */}
-                <div className="p-5 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1 custom-scrollbar">
 
                   {/* 1. Payment Financial Summary Matrix */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-white/[0.03] p-4 rounded-xl border border-white/10">

@@ -461,11 +461,11 @@ export default function RegisterPage() {
         </div>
 
         {/* Steps indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 flex-wrap sm:flex-nowrap">
           {STEPS.map((s, i) => (
             <React.Fragment key={s}>
               <div
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-all ${
+                className={`flex items-center gap-1 text-[10px] sm:text-xs font-medium px-2.5 sm:px-3 py-1 rounded-full transition-all ${
                   i === step
                     ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
                     : i < step
@@ -473,11 +473,11 @@ export default function RegisterPage() {
                     : 'bg-white/5 text-slate-500'
                 }`}
               >
-                {i < step ? <CheckCircle size={12} /> : <span className="w-4 text-center">{i + 1}</span>}
-                {s}
+                {i < step ? <CheckCircle size={12} /> : <span className="w-3.5 sm:w-4 text-center">{i + 1}</span>}
+                <span>{s}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-px ${i < step ? 'bg-emerald-600/50' : 'bg-white/10'}`} />
+                <div className={`hidden sm:block flex-1 h-px ${i < step ? 'bg-emerald-600/50' : 'bg-white/10'}`} />
               )}
             </React.Fragment>
           ))}
