@@ -325,6 +325,12 @@ export default function SuperAdminDashboard() {
               <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} /> Refresh
             </button>
             <Link
+              href="/superadmin/transactions"
+              className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
+            >
+              <CreditCard size={14} /> Transaction Logs
+            </Link>
+            <Link
               href="/superadmin/scan"
               className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/30"
             >
@@ -384,6 +390,12 @@ export default function SuperAdminDashboard() {
               {t.label}
             </button>
           ))}
+          <Link
+            href="/superadmin/transactions"
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-amber-300 hover:text-white flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20"
+          >
+            <CreditCard size={12} /> Transaction Logs →
+          </Link>
         </div>
 
         {/* TAB 1: OVERVIEW */}
@@ -397,7 +409,7 @@ export default function SuperAdminDashboard() {
                 { label: 'External Students', value: overview?.external_students ?? '—', sub: 'National Reach', color: 'text-cyan-400', href: '/superadmin/users' },
                 { label: 'Active Events', value: overview?.total_events ?? '—', sub: 'Across 12 Clubs', color: 'text-blue-400', href: '/events' },
                 { label: 'Gate Check-ins', value: overview?.total_checkins ?? '—', sub: 'QR Scans Done', color: 'text-emerald-400', href: '/superadmin/scan' },
-                { label: 'Total Revenue', value: `₹${overview?.total_revenue_inr ?? 0}`, sub: 'Paid Workshops', color: 'text-amber-400', href: '/superadmin/users' },
+                { label: 'Total Revenue', value: `₹${overview?.total_revenue_inr ?? 0}`, sub: 'Transaction Logs', color: 'text-amber-400', href: '/superadmin/transactions' },
               ].map(kpi => (
                 <Link key={kpi.label} href={kpi.href} className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-2xl p-4 transition-all block">
                   <p className="text-slate-400 text-xs font-medium">{kpi.label}</p>
@@ -1640,7 +1652,7 @@ export default function SuperAdminDashboard() {
                                   <p className="text-[10px] text-slate-500 font-mono mt-0.5">{formatDateTimeIST(p.created_at)}</p>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-emerald-400 font-mono text-sm">₹{p.amount}</span>
+                                  <span className="font-bold text-emerald-400 font-mono text-sm">₹{Math.round(Number(p.amount || 0) / 100)}</span>
                                   <p className="text-[10px] text-emerald-300 font-semibold uppercase">{p.status}</p>
                                 </div>
                               </div>

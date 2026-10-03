@@ -1110,7 +1110,7 @@ export default function AdminUsersPage() {
                                   <p className="text-[10px] text-slate-500 font-mono mt-0.5">{formatDateTimeIST(p.created_at)}</p>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-emerald-400 font-mono text-sm">₹{p.amount}</span>
+                                  <span className="font-bold text-emerald-400 font-mono text-sm">₹{Math.round(Number(p.amount || 0) / 100)}</span>
                                   <p className="text-[10px] text-emerald-300 font-semibold uppercase">{p.status}</p>
                                 </div>
                               </div>
