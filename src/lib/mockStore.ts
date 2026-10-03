@@ -271,27 +271,115 @@ class MockDbEngine {
     }
 
     // Category filter
-    if (qLower.includes('category =') || qLower.includes('e.category =')) {
-      const knownCats = ['technical', 'cultural', 'coding & hackathon', 'robotics', 'gaming', 'workshops', 'quiz & literary', 'arts & media', 'management'];
-      const catParam = params.find(p => typeof p === 'string' && knownCats.includes(p.toLowerCase()));
-      if (catParam) {
-        list = list.filter(e => e.category.toLowerCase() === catParam.toLowerCase());
+    const isCategoryFilter = qLower.includes('e.category =') || 
+                             qLower.includes('category =') || 
+                             (qLower.includes('category ilike') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('cultural') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('dance') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('music') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('gaming') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('robotics') && !qLower.includes('e.name ilike'));
+
+    if (isCategoryFilter) {
+      if (qLower.includes('dance') || qLower.includes('nrityasparsh')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('dance') || 
+                 tagsStr.includes('dance') || tagsStr.includes('garba') || tagsStr.includes('dandiya') ||
+                 club?.slug === 'nrityasparsh';
+        });
+      } else if (qLower.includes('music') || qLower.includes('saptaswara')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('music') || 
+                 tagsStr.includes('music') || tagsStr.includes('vocal') || tagsStr.includes('band') ||
+                 club?.slug === 'saptaswara' || club?.slug === 'avisruta';
+        });
+      } else if (qLower.includes('media') || qLower.includes('theatre') || qLower.includes('drisya')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('media') || e.category.toLowerCase().includes('art') ||
+                 tagsStr.includes('theatre') || tagsStr.includes('film') || tagsStr.includes('art') ||
+                 club?.slug === 'drisya' || club?.slug === 'prachurya';
+        });
+      } else if (qLower.includes('cultural')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          return e.category.toLowerCase().includes('cultural') || 
+                 ['prachurya', 'saptaswara', 'nrityasparsh', 'drisya'].includes(club?.slug || '');
+        });
+      } else if (qLower.includes('coding') || qLower.includes('hackathon')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('coding') || 
+          e.category.toLowerCase().includes('hackathon') ||
+          (e.name || '').toLowerCase().includes('hackathon') ||
+          (e.name || '').toLowerCase().includes('challenge') ||
+          (e.tags || []).some(t => t.toLowerCase().includes('hackathon') || t.toLowerCase().includes('coding'))
+        );
+      } else if (qLower.includes('gaming')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('gaming') || 
+          (e.tags || []).some(t => t.toLowerCase().includes('gaming') || t.toLowerCase().includes('badminton') || t.toLowerCase().includes('sports') || t.toLowerCase().includes('mafia'))
+        );
+      } else if (qLower.includes('robotics')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('robotics') || 
+          (e.name || '').toLowerCase().includes('robot') ||
+          (e.tags || []).some(t => t.toLowerCase().includes('robot'))
+        );
+      } else {
+        const knownCats = ['technical', 'cultural', 'coding & hackathon', 'robotics', 'gaming', 'workshops', 'quiz & literary', 'arts & media', 'management', 'dance', 'music', 'film & media'];
+        const catParam = params.find(p => typeof p === 'string' && knownCats.some(k => p.toLowerCase().includes(k)));
+        if (catParam) {
+          const cleanCat = catParam.replace(/%/g, '').toLowerCase().trim();
+          list = list.filter(e => 
+            e.category.toLowerCase().includes(cleanCat) ||
+            (e.tags || []).some(t => t.toLowerCase().includes(cleanCat))
+          );
+        }
       }
     }
 
     // Search filter (ILIKE)
-    if (qLower.includes('ilike')) {
-      const searchParam = params.find(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'));
-      if (searchParam) {
-        const cleanTerm = searchParam.replace(/%/g, '').toLowerCase().trim();
-        if (cleanTerm) {
-          list = list.filter(e => 
-            (e.name || '').toLowerCase().includes(cleanTerm) ||
-            (e.tagline || '').toLowerCase().includes(cleanTerm) ||
-            (e.short_description || '').toLowerCase().includes(cleanTerm) ||
-            (e.event_code || '').toLowerCase().includes(cleanTerm)
-          );
-        }
+    if (qLower.includes('e.name ilike') || qLower.includes('e.tagline ilike')) {
+      const searchTerms = params
+        .filter(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'))
+        .map(p => (p as string).replace(/%/g, '').toLowerCase().trim())
+        .filter(Boolean);
+
+      if (searchTerms.length > 0) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const clubName = (club?.name || '').toLowerCase();
+          const clubSlug = (club?.slug || '').toLowerCase();
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+
+          return searchTerms.some(term => {
+            const isMatch = 
+              (e.name || '').toLowerCase().includes(term) ||
+              (e.tagline || '').toLowerCase().includes(term) ||
+              (e.short_description || '').toLowerCase().includes(term) ||
+              (e.event_code || '').toLowerCase().includes(term) ||
+              (e.venue || '').toLowerCase().includes(term) ||
+              (e.category || '').toLowerCase().includes(term) ||
+              clubName.includes(term) ||
+              clubSlug.includes(term) ||
+              tagsStr.includes(term);
+
+            if (isMatch) return true;
+
+            // Handle spelling variants
+            if (term === 'drsya' && (clubSlug.includes('drisya') || clubName.includes('drisya'))) return true;
+            if (term === 'drisya' && (clubSlug.includes('drsya') || clubName.includes('drsya'))) return true;
+            if (term === 'avisrutha' && (clubSlug.includes('avisruta') || clubName.includes('avisruta'))) return true;
+            if (term === 'harness' && (e.name || '').toLowerCase().includes('harness')) return true;
+
+            return false;
+          });
+        });
       }
     }
 
@@ -415,7 +503,7 @@ class MockDbEngine {
     }
 
     // 7. SELECT events with club join
-    if (qLower.includes('from events e') || (qLower.includes('from events') && !qLower.includes('update events'))) {
+    if ((qLower.includes('from events e') || (qLower.includes('from events') && !qLower.includes('update events'))) && !qLower.includes('count(*)')) {
       if (qLower.includes('where e.id =') || qLower.includes('where id =')) {
         const eventId = params[0];
         const event = this.events.find(e => e.id === eventId);

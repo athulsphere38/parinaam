@@ -90,6 +90,7 @@ export default function EventsPage() {
 
   const clearFilters = () => { setSearchInput(''); setSearch(''); setCategory('All'); setClubFilter(''); setPage(1); };
   const hasFilters = search || category !== 'All' || clubFilter;
+  const selectedClub = clubs.find(c => c.id === clubFilter);
 
   return (
     <div className="min-h-screen bg-[#05030a] pt-28 pb-20">
@@ -112,7 +113,7 @@ export default function EventsPage() {
             <input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              placeholder="Search events, keywords..."
+              placeholder="Search events, clubs (e.g. Drisya, Chakravyuha), or keywords..."
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 text-sm transition-all"
             />
             {searchInput && (
@@ -121,6 +122,19 @@ export default function EventsPage() {
               </button>
             )}
           </div>
+
+          {/* Active Club Indicator if searching within a specific club */}
+          {clubFilter && search && (
+            <div className="flex items-center gap-2 text-xs bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-xl text-purple-300 w-fit">
+              <span>Searching only within <strong>{selectedClub?.name || 'Selected Club'}</strong></span>
+              <button
+                onClick={() => { setClubFilter(''); setPage(1); }}
+                className="underline hover:text-white font-semibold ml-1 cursor-pointer"
+              >
+                Search across all 12 clubs instead
+              </button>
+            </div>
+          )}
 
           {/* Club pills */}
           <div className="flex gap-2 flex-wrap">
@@ -170,9 +184,30 @@ export default function EventsPage() {
               {hasFilters ? 'Try clearing your search or selecting a different club cluster.' : 'The 12 official club administrators are currently uploading festival workshops and competitions.'}
             </p>
             {hasFilters && (
-              <button onClick={clearFilters} className="mt-5 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all">
-                Clear all filters
-              </button>
+              <div className="flex flex-wrap gap-2 justify-center mt-5">
+                {clubFilter && (
+                  <button
+                    onClick={() => { setClubFilter(''); setPage(1); }}
+                    className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Search across All 12 Clubs
+                  </button>
+                )}
+                {category !== 'All' && (
+                  <button
+                    onClick={() => { setCategory('All'); setPage(1); }}
+                    className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    View All Categories
+                  </button>
+                )}
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all cursor-pointer"
+                >
+                  Clear all filters
+                </button>
+              </div>
             )}
           </div>
         ) : (

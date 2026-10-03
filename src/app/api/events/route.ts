@@ -28,15 +28,68 @@ export async function GET(req: NextRequest) {
       params.push(clubId);
       paramIdx++;
     }
-    if (category) {
-      whereClause += ` AND e.category = $${paramIdx}`;
-      params.push(category);
-      paramIdx++;
+
+    if (category && category !== 'All') {
+      const catLower = category.toLowerCase().trim();
+      if (catLower === 'dance') {
+        whereClause += ` AND (e.category ILIKE '%dance%' OR e.tags::text ILIKE '%dance%' OR e.tags::text ILIKE '%garba%' OR e.tags::text ILIKE '%dandiya%' OR c.slug = 'nrityasparsh')`;
+      } else if (catLower === 'music') {
+        whereClause += ` AND (e.category ILIKE '%music%' OR e.tags::text ILIKE '%music%' OR e.tags::text ILIKE '%vocal%' OR e.tags::text ILIKE '%band%' OR c.slug = 'saptaswara' OR c.slug = 'avisruta')`;
+      } else if (catLower === 'film & media' || catLower === 'arts & media') {
+        whereClause += ` AND (e.category ILIKE '%media%' OR e.category ILIKE '%art%' OR e.tags::text ILIKE '%theatre%' OR e.tags::text ILIKE '%film%' OR e.tags::text ILIKE '%art%' OR c.slug = 'drisya' OR c.slug = 'prachurya')`;
+      } else if (catLower === 'cultural') {
+        whereClause += ` AND (e.category ILIKE '%cultural%' OR c.slug IN ('prachurya', 'saptaswara', 'nrityasparsh', 'drisya'))`;
+      } else if (catLower === 'technical') {
+        whereClause += ` AND (e.category ILIKE '%technical%' OR c.slug IN ('chakravyuha', 'relu', 'robotics', 'ieee', 'salesforce-agentblazer'))`;
+      } else if (catLower === 'coding & hackathon') {
+        whereClause += ` AND (e.category ILIKE '%coding%' OR e.category ILIKE '%hackathon%' OR e.tags::text ILIKE '%hackathon%' OR e.tags::text ILIKE '%coding%' OR e.name ILIKE '%hackathon%' OR e.name ILIKE '%challenge%')`;
+      } else if (catLower === 'gaming') {
+        whereClause += ` AND (e.category ILIKE '%gaming%' OR e.tags::text ILIKE '%gaming%' OR e.tags::text ILIKE '%badminton%' OR e.tags::text ILIKE '%sports%' OR e.tags::text ILIKE '%mafia%')`;
+      } else if (catLower === 'robotics') {
+        whereClause += ` AND (e.category ILIKE '%robotics%' OR e.tags::text ILIKE '%robot%' OR e.name ILIKE '%robot%')`;
+      } else {
+        whereClause += ` AND (e.category ILIKE $${paramIdx} OR e.tags::text ILIKE $${paramIdx})`;
+        params.push(`%${category}%`);
+        paramIdx++;
+      }
     }
-    if (search) {
-      whereClause += ` AND (e.name ILIKE $${paramIdx} OR e.tagline ILIKE $${paramIdx} OR e.short_description ILIKE $${paramIdx})`;
-      params.push(`%${search}%`);
-      paramIdx++;
+
+    if (search && search.trim()) {
+      const rawSearch = search.trim();
+      const STOP_WORDS = new Set(['from', 'by', 'in', 'at', 'the', 'and', 'of', 'a', 'an', 'for', 'with', 'on', 'to']);
+      
+      // Tokenize query into words
+      const rawTokens = rawSearch.split(/[\s,+/\\-]+/).filter(Boolean);
+      // Filter out stop words unless all words are stop words
+      const meaningfulTokens = rawTokens.filter(t => !STOP_WORDS.has(t.toLowerCase()));
+      const termsToSearch = meaningfulTokens.length > 0 ? meaningfulTokens : rawTokens;
+
+      // Alias mapping for common misspellings or variations
+      const getTermVariants = (term: string): string[] => {
+        const t = term.toLowerCase();
+        const variants = [t];
+        if (t === 'drsya') variants.push('drisya');
+        if (t === 'drisya') variants.push('drsya');
+        if (t === 'avisrutha') variants.push('avisruta');
+        if (t === 'avisruta') variants.push('avisrutha');
+        if (t === 'harness') variants.push('harness.md');
+        if (t === 'nritya' || t === 'sparsh') variants.push('nrityasparsh');
+        return Array.from(new Set(variants));
+      };
+
+      // Each search term must match SOME field in the event or its club
+      termsToSearch.forEach(term => {
+        const variants = getTermVariants(term);
+        const subConditions: string[] = [];
+        variants.forEach(v => {
+          subConditions.push(
+            `e.name ILIKE $${paramIdx} OR e.tagline ILIKE $${paramIdx} OR e.short_description ILIKE $${paramIdx} OR c.name ILIKE $${paramIdx} OR c.slug ILIKE $${paramIdx} OR e.category ILIKE $${paramIdx} OR e.tags::text ILIKE $${paramIdx} OR e.venue ILIKE $${paramIdx}`
+          );
+          params.push(`%${v}%`);
+          paramIdx++;
+        });
+        whereClause += ` AND (${subConditions.join(' OR ')})`;
+      });
     }
 
     const [eventsResult, countResult] = await Promise.all([
@@ -59,7 +112,7 @@ export async function GET(req: NextRequest) {
         [...params, limit, offset]
       ),
       db.query(
-        `SELECT COUNT(*) FROM events e ${whereClause}`,
+        `SELECT COUNT(*) FROM events e JOIN clubs c ON e.club_id = c.id ${whereClause}`,
         params
       )
     ]);

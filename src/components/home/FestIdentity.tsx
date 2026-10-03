@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
   Music,
@@ -79,26 +80,51 @@ export const FestIdentity = () => {
       border: 'border-emerald-500/40',
       glow: 'from-emerald-900/30 to-teal-950/40',
       tagColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+      href: '/events/3c640142-44a4-4b06-8e76-68b2dda1c9e3',
     },
     {
       type: 'feature',
       icon: Cpu,
-      badge: '36-HR CODEATHON',
-      title: 'HackArena 3.0 Hackathon',
-      subtitle: 'Algorithmic Engineering & Product Demo',
+      badge: 'FLAGSHIP AI DEVATHON',
+      title: 'Harness.md Challenge',
+      subtitle: 'Autonomous AI Agents Hackathon by Chakravyuha',
       border: 'border-violet-500/40',
       glow: 'from-violet-900/30 to-purple-950/40',
       tagColor: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
+      href: '/events/6b55f19c-02ce-45b2-a107-0935e4e5babd',
+    },
+    {
+      type: 'feature',
+      icon: Zap,
+      badge: 'AVISRUTA • GLOW TOURNAMENT',
+      title: 'Neon Badminton',
+      subtitle: 'Glow-in-the-Dark Badminton under UV Lighting',
+      border: 'border-fuchsia-500/40',
+      glow: 'from-fuchsia-900/30 to-purple-950/40',
+      tagColor: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/30',
+      href: '/events/edd3b356-a5c6-4d01-a2e6-422ad74cc8e6',
     },
     {
       type: 'feature',
       icon: Gamepad2,
-      badge: 'COMBAT ARENA',
-      title: 'RoboWars Deathmatch',
-      subtitle: 'Heavyweight Custom Combat Bot Clashes',
+      badge: 'AVINYA • STRATEGY ARENA',
+      title: 'The Syndicate - Game of Deceit',
+      subtitle: 'Mafia-Style Social Deduction & Strategy Arena',
+      border: 'border-lime-500/40',
+      glow: 'from-lime-900/30 to-emerald-950/40',
+      tagColor: 'text-lime-400 bg-lime-500/10 border-lime-500/30',
+      href: '/events/8d11e56c-83e6-4ead-a1b4-dff52b55ee5e',
+    },
+    {
+      type: 'feature',
+      icon: Gamepad2,
+      badge: 'ROBOTICS • SPEED ARENA',
+      title: 'Obstacle Robotic Racing',
+      subtitle: 'High-Speed All-Terrain Land Rover & RC Car Trials',
       border: 'border-rose-500/40',
       glow: 'from-rose-900/30 to-pink-950/40',
       tagColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+      href: '/events/fe459bfb-059b-4b90-8fb8-5e9ac9185417',
     },
   ];
 
@@ -192,10 +218,9 @@ export const FestIdentity = () => {
             {/* Duplicated twice for flawless seamless infinite loop */}
             {[...brandCards, ...brandCards].map((card, idx) => {
               const Icon = card.icon;
-              return (
+              const cardContent = (
                 <div
-                  key={`brand-track-${idx}`}
-                  className={`flex-shrink-0 w-72 sm:w-80 h-52 p-4 sm:p-5 rounded-2xl bg-gradient-to-br ${card.glow} border ${card.border} backdrop-blur-xl shadow-xl hover:border-purple-300/80 hover:shadow-[0_0_25px_rgba(217,70,239,0.35)] transition-all duration-300 group cursor-default flex flex-col justify-between`}
+                  className={`flex-shrink-0 w-72 sm:w-80 h-52 p-4 sm:p-5 rounded-2xl bg-gradient-to-br ${card.glow} border ${card.border} backdrop-blur-xl shadow-xl hover:border-purple-300/80 hover:shadow-[0_0_25px_rgba(217,70,239,0.35)] transition-all duration-300 group ${card.href ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-default'} flex flex-col justify-between`}
                 >
                   <div className="flex items-center justify-between h-7 mb-2">
                     <span
@@ -234,6 +259,16 @@ export const FestIdentity = () => {
                       {card.subtitle}
                     </p>
                   </div>
+                </div>
+              );
+
+              return card.href ? (
+                <Link key={`brand-track-${idx}`} href={card.href} className="block flex-shrink-0">
+                  {cardContent}
+                </Link>
+              ) : (
+                <div key={`brand-track-${idx}`} className="flex-shrink-0">
+                  {cardContent}
                 </div>
               );
             })}

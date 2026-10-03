@@ -166,7 +166,7 @@ export default function SponsorRegistrationPage() {
             <span className="uppercase tracking-widest font-bold">THE PACKAGES</span>
           </div>
           
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-wide text-white font-['Pixelify_Sans',_monospace]">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-sans">
             Choose Your{' '}
             <span className="bg-gradient-to-r from-fuchsia-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
               Level of Partnership
@@ -186,7 +186,7 @@ export default function SponsorRegistrationPage() {
             </div>
             
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white font-['Pixelify_Sans',_monospace]">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white font-sans tracking-tight">
                 Sponsorship Registration Received!
               </h2>
               <p className="text-sm text-slate-300">
@@ -239,8 +239,8 @@ export default function SponsorRegistrationPage() {
             <div className="p-4 bg-purple-950/50 border border-purple-500/30 rounded-xl text-xs text-purple-200 text-left flex items-start gap-3">
               <Clock size={16} className="text-fuchsia-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-white mb-0.5">MoU &amp; Corporate Desk Notice</p>
-                Our Head of Corporate Relations will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, tax invoice guidelines, and MoU agreement.
+                <p className="font-semibold text-white mb-0.5">MoU &amp; Help Desk Notice</p>
+                Our festival relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, tax invoice guidelines, and MoU agreement.
               </div>
             </div>
 
@@ -293,7 +293,7 @@ export default function SponsorRegistrationPage() {
 
                     {/* Tier Name & Amount */}
                     <div className="space-y-1 mb-5 border-b border-purple-900/40 pb-4">
-                      <h3 className="text-xl font-bold text-white tracking-wide font-['Pixelify_Sans',_monospace]">
+                      <h3 className="text-xl font-bold text-white tracking-wide font-sans">
                         {pkg.tierName}
                       </h3>
                       <p className={`text-2xl sm:text-3xl font-extrabold font-mono ${pkg.priceColor}`}>
@@ -352,7 +352,7 @@ export default function SponsorRegistrationPage() {
                     <Sparkles size={12} className="text-amber-400" />
                     <span className="uppercase tracking-widest font-bold">FESTIVAL AT A GLANCE</span>
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-white font-['Pixelify_Sans',_monospace]">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white font-sans tracking-tight">
                     Sponsorship Brochure &amp; Highlights
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400">
@@ -393,7 +393,7 @@ export default function SponsorRegistrationPage() {
                   <span className="text-xs font-mono text-fuchsia-400 font-bold tracking-wider uppercase block">
                     SPONSOR REGISTRATION FORM
                   </span>
-                  <h3 className="text-2xl font-bold text-white mt-1 font-['Pixelify_Sans',_monospace]">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 font-sans tracking-tight">
                     Register Your Company as a Sponsor
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
@@ -588,7 +588,7 @@ export default function SponsorRegistrationPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-900/40 pb-3">
                       <div className="flex items-center gap-2">
                         <CreditCard size={18} className="text-fuchsia-400" />
-                        <span className="text-sm font-bold text-white tracking-wide font-['Pixelify_Sans',_monospace]">
+                        <span className="text-sm font-bold text-white tracking-wide font-sans">
                           Payment Section
                         </span>
                       </div>
@@ -657,28 +657,28 @@ export default function SponsorRegistrationPage() {
                 </form>
               </div>
 
-              {/* Corporate Desk Contacts (4 cols) */}
+              {/* Help Desk Contacts (4 cols) */}
               <div className="lg:col-span-4 space-y-6">
                 
                 {/* Official Contact Card */}
                 <div className="bg-[#0c091d]/90 border border-purple-900/50 rounded-2xl p-6 backdrop-blur-md space-y-5 shadow-xl">
-                  <div className="flex items-center gap-2 text-fuchsia-400 font-mono text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-fuchsia-400 font-sans text-xs font-bold tracking-wider uppercase">
                     <Phone size={15} />
-                    <span>CORPORATE DESK CONTACTS</span>
+                    <span>HELP DESK CONTACTS</span>
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                    Need custom branding, booth dimensions, or invoice inquiries? Contact our team directly:
+                  <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                    Need custom branding, booth dimensions, or assistance? Contact our team directly:
                   </p>
 
-                  <div className="space-y-3 font-mono text-xs">
+                  <div className="space-y-3 font-sans text-xs">
                     <div className="bg-black/60 border border-purple-900/40 rounded-xl p-3.5 space-y-2">
-                      <span className="text-[10px] text-fuchsia-300 uppercase block font-semibold">
-                        OFFICIAL SPONSORSHIP DESK
+                      <span className="text-[11px] text-fuchsia-300 uppercase block font-semibold tracking-wide">
+                        OFFICIAL HELP DESK
                       </span>
-                      <p className="text-slate-300 flex items-center gap-2">
+                      <p className="text-slate-200 flex items-center gap-2">
                         <Mail size={13} className="text-fuchsia-400" />
-                        <a href="mailto:parinaam@av.amrita.edu" className="hover:text-fuchsia-400 transition-colors">
+                        <a href="mailto:parinaam@av.amrita.edu" className="hover:text-fuchsia-400 transition-colors font-medium">
                           parinaam@av.amrita.edu
                         </a>
                       </p>
@@ -689,17 +689,17 @@ export default function SponsorRegistrationPage() {
                     </div>
 
                     <div className="bg-black/60 border border-purple-900/40 rounded-xl p-3.5 space-y-1 text-slate-300">
-                      <span className="text-[10px] text-amber-400 uppercase block font-semibold">
+                      <span className="text-[11px] text-amber-400 uppercase block font-semibold tracking-wide">
                         PROPOSAL &amp; MOU DESK
                       </span>
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                        Our corporate relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, invoice guidelines, and MoU agreement.
+                      <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                        Our festival relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, invoice guidelines, and MoU agreement.
                       </p>
                     </div>
                   </div>
 
                   {/* Campus Address */}
-                  <div className="pt-2 border-t border-purple-900/40 text-xs text-slate-400 space-y-1">
+                  <div className="pt-2 border-t border-purple-900/40 text-xs text-slate-300 space-y-1">
                     <p className="flex items-start gap-2">
                       <MapPin size={14} className="text-fuchsia-400 shrink-0 mt-0.5" />
                       <span className="font-sans">
@@ -716,10 +716,10 @@ export default function SponsorRegistrationPage() {
                   <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto text-fuchsia-300">
                     <Download size={20} />
                   </div>
-                  <h4 className="text-sm font-bold text-white font-['Pixelify_Sans',_monospace]">
+                  <h4 className="text-sm font-bold text-white font-sans">
                     Download Partnership Deck
                   </h4>
-                  <p className="text-xs text-slate-400 font-sans">
+                  <p className="text-xs text-slate-300 font-sans">
                     Official Parinaam 2026 PDF brochure containing full campus event maps &amp; past sponsors.
                   </p>
                   <a
