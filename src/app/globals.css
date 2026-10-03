@@ -1,3 +1,76 @@
+/* Custom Pixelify Sans Font with open, distinct 'C' & 'c' */
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Regular.woff') format('woff'),
+       url('/fonts/PixelifySans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Medium.woff') format('woff'),
+       url('/fonts/PixelifySans-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-SemiBold.woff') format('woff'),
+       url('/fonts/PixelifySans-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Bold.woff') format('woff'),
+       url('/fonts/PixelifySans-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify_Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Regular.woff') format('woff'),
+       url('/fonts/PixelifySans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify_Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Medium.woff') format('woff'),
+       url('/fonts/PixelifySans-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify_Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-SemiBold.woff') format('woff'),
+       url('/fonts/PixelifySans-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Pixelify_Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/PixelifySans-Bold.woff') format('woff'),
+       url('/fonts/PixelifySans-Bold.ttf') format('truetype');
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
