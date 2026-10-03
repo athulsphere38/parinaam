@@ -24,10 +24,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
     const user = userRes.rows[0];
 
     const regsRes = await db.query(
-      `SELECT r.id, r.status, e.name as event_name, c.name as club_name
+      `SELECT r.id, r.status, COALESCE(e.name, 'Festival Event') as event_name, COALESCE(c.name, 'PARINAAM Fest') as club_name
        FROM registrations r
-       JOIN events e ON r.event_id = e.id
-       JOIN clubs c ON e.club_id = c.id
+       LEFT JOIN events e ON r.event_id = e.id
+       LEFT JOIN clubs c ON e.club_id = c.id
        WHERE r.user_id = $1 AND r.status = 'CONFIRMED'`,
       [user.id]
     );

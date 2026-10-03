@@ -42,24 +42,24 @@ export async function GET(req: NextRequest) {
           r.payment_status,
           r.team_name,
           r.registered_at,
-          e.id as event_id,
-          e.name as event_name,
-          e.event_code,
-          e.category,
-          e.venue,
+          COALESCE(e.id, r.event_id) as event_id,
+          COALESCE(e.name, 'Festival Event') as event_name,
+          COALESCE(e.event_code, 'EVT') as event_code,
+          COALESCE(e.category, 'General') as category,
+          COALESCE(e.venue, 'Amrita Campus') as venue,
           e.date_start,
           e.start_time,
           e.day_number,
-          e.fee,
+          COALESCE(e.fee, r.amount_paid, 0) as fee,
           c.id as club_id,
-          c.name as club_name,
-          c.slug as club_slug,
-          c.color as club_color,
+          COALESCE(c.name, 'PARINAAM Fest') as club_name,
+          COALESCE(c.slug, 'parinaam') as club_slug,
+          COALESCE(c.color, '#9333ea') as club_color,
           a.id as attendance_id,
           a.scanned_at as checked_in_at
         FROM registrations r
-        JOIN events e ON r.event_id = e.id
-        JOIN clubs c ON e.club_id = c.id
+        LEFT JOIN events e ON r.event_id = e.id
+        LEFT JOIN clubs c ON e.club_id = c.id
         LEFT JOIN attendance a ON a.user_id = r.user_id AND a.event_id = e.id AND a.status = 'SUCCESS'
         WHERE r.user_id = $1
         ORDER BY a.scanned_at DESC NULLS LAST, r.registered_at DESC`,

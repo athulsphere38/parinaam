@@ -18,17 +18,6 @@ export const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const { cartCount, isCartOpen, openCart, closeCart } = useCart();
 
-  const isProfileComplete = isStudentProfileComplete(user);
-
-  const handleCartClick = () => {
-    if (user && user.role === 'student' && !isProfileComplete) {
-      alert('Please complete your platform registration profile before accessing the event cart.');
-      router.push('/dashboard/profile');
-      return;
-    }
-    openCart();
-  };
-
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -41,6 +30,22 @@ export const Navbar = () => {
     if (userMenuOpen) document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
   }, [userMenuOpen]);
+
+  // Completely hide Navbar on registration pages
+  if (pathname === '/auth/register' || pathname === '/register' || pathname?.startsWith('/auth/register')) {
+    return null;
+  }
+
+  const isProfileComplete = isStudentProfileComplete(user);
+
+  const handleCartClick = () => {
+    if (user && user.role === 'student' && !isProfileComplete) {
+      alert('Please complete your platform registration profile before accessing the event cart.');
+      router.push('/dashboard/profile');
+      return;
+    }
+    openCart();
+  };
 
   const navLinks = user
     ? user.role === 'student'

@@ -5,10 +5,14 @@
 @layer base {
   * {
     border-color: var(--border, #231435);
-    cursor: none !important;
+  }
+  
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
-  
   html {
     scroll-behavior: smooth;
     color-scheme: dark;
@@ -17,53 +21,14 @@
   body {
     background-color: var(--background, #05030a);
     color: var(--foreground, #f1f5f9);
-    font-family: var(--font-gothic, 'Oswald', 'Inter', sans-serif);
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    overflow-x: hidden;
+    font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Headings — gothic ultra condensed, slightly bolder */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-gothic, 'Oswald', sans-serif);
-    font-weight: 400;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
-
-  /* All readable content text — Gothic Ultra */
-  p, li, label, a, td, th, blockquote, figcaption,
-  span:not([class*="font-pixel"]):not([class*="Pixelify"]):not([class*="pixel"]) {
-    font-family: var(--font-gothic, 'Oswald', sans-serif);
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  /* Inputs & buttons: Gothic but tighter spacing */
-  input, textarea, select, button {
-    font-family: var(--font-gothic, 'Oswald', sans-serif);
-    font-weight: 300;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  /* ====================================================
-     PIXEL FONT — protect from gothic overrides
-     ==================================================== */
-  .font-pixel,
-  [class*="font-pixel"],
-  .pixel-magenta-glow,
-  [class*="Pixelify"],
-  [style*="Pixelify"],
-  [style*="Silkscreen"] {
-    font-family: var(--font-pixel, 'Pixelify Sans', 'Silkscreen', monospace) !important;
-    letter-spacing: revert !important;
-    text-transform: revert !important;
-    font-weight: revert !important;
+    font-family: var(--font-display, 'Outfit', 'Inter', sans-serif);
+    letter-spacing: -0.01em;
   }
 }
 
@@ -162,6 +127,42 @@
   box-shadow: 0 10px 35px -10px rgba(217, 70, 239, 0.5);
 }
 
+/* Flagship card — vibrant running-light border wrapper */
+.flagship-wrapper {
+  position: relative;
+  border-radius: 1.125rem; /* slightly larger than card's rounded-2xl to account for padding */
+  padding: 2px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: conic-gradient(
+    from var(--flagship-angle, 0deg),
+    #f59e0b,
+    #f97316,
+    #ec4899,
+    #a855f7,
+    #6366f1,
+    #3b82f6,
+    #06b6d4,
+    #10b981,
+    #f59e0b
+  );
+  animation: flagship-rotate 2.5s linear infinite;
+  box-shadow: 0 0 18px 2px rgba(168, 85, 247, 0.35), 0 0 40px 4px rgba(236, 72, 153, 0.15);
+}
+.flagship-wrapper > div {
+  border-radius: calc(1.125rem - 2px);
+  overflow: hidden;
+}
+@property --flagship-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes flagship-rotate {
+  to { --flagship-angle: 360deg; }
+}
+
 /* Magenta / Purple Pixel Glow Text */
 .pixel-magenta-glow {
   font-family: var(--font-pixel, 'Pixelify Sans', monospace);
@@ -182,4 +183,42 @@
   background-image: linear-gradient(to right, rgba(217, 70, 239, 0.06) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(217, 70, 239, 0.06) 1px, transparent 1px);
   background-size: 36px 36px;
+}
+
+/* Continuous Horizontal Scrolling Animations */
+@keyframes marquee-scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee-scroll-left 32s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee-scroll-right 36s linear infinite;
+}
+
+.marquee-container:hover .animate-marquee-left,
+.marquee-container:hover .animate-marquee-right {
+  animation-play-state: paused;
 }

@@ -19,14 +19,29 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const ALLOWED = ['full_name','phone','college_name','department','year_of_study','city','roll_number'];
+    if ('email' in body && body.email !== undefined) {
+      const email = String(body.email).toLowerCase().trim();
+      const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+      if (!EMAIL_REGEX.test(email)) {
+        return error('Please enter a valid email address');
+      }
+      // Check if email already exists for another user
+      const existing = await db.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2', [email, session.userId]);
+      if (existing.rows.length > 0) {
+        return error('This email is already in use by another account');
+      }
+      body.email = email;
+    }
+
+    // roll_number is strictly locked and cannot be modified after registration
+    const ALLOWED = ['full_name','email','phone','college_name','department','year_of_study','city'];
 
     const updates: string[] = [];
     const values: unknown[]  = [];
     let idx = 1;
 
     for (const key of ALLOWED) {
-      if (key in body) {
+      if (key in body && body[key] !== undefined) {
         updates.push(`${key} = $${idx}`);
         values.push(body[key]);
         idx++;

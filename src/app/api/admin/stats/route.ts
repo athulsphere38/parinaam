@@ -19,12 +19,14 @@ export async function GET(req: NextRequest) {
       totalRegistrations,
       confirmedRegistrations,
       totalRevenue,
+      paymentStats,
       checkinsCount,
       branchStats,
       yearStats,
       clubStats,
       recentUsers,
       recentRegistrations,
+      clubEventReports,
     ] = await Promise.all([
       db.query(`SELECT COUNT(*) FROM users WHERE role = 'student'`),
       db.query(`SELECT COUNT(*) FROM users WHERE verification_status = 'pending' AND role = 'student'`),
@@ -34,6 +36,17 @@ export async function GET(req: NextRequest) {
       db.query(`SELECT COUNT(*) FROM registrations`),
       db.query(`SELECT COUNT(*) FROM registrations WHERE status = 'CONFIRMED'`),
       db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'paid'`),
+      db.query(`
+        SELECT 
+          COUNT(*) as total_payments,
+          COUNT(*) FILTER (WHERE status = 'paid') as paid_count,
+          COUNT(*) FILTER (WHERE status = 'created') as created_count,
+          COUNT(*) FILTER (WHERE status = 'failed') as failed_count,
+          COUNT(*) FILTER (WHERE status = 'refunded') as refunded_count,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND type = 'platform_fee'), 0) as platform_revenue_paise,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND type = 'event_fee'), 0) as event_revenue_paise
+        FROM payments
+      `),
       db.query(`SELECT COUNT(*) FROM attendance`),
       db.query(`
         SELECT department, COUNT(*) as count 
@@ -71,16 +84,47 @@ export async function GET(req: NextRequest) {
       db.query(`
         SELECT r.id, r.registered_at, r.status,
           u.full_name, u.college_name, u.is_amrita_student, u.department, u.year_of_study,
-          e.name as event_name,
-          c.name as club_name
+          COALESCE(e.name, 'Festival Event') as event_name,
+          COALESCE(c.name, 'PARINAAM Fest') as club_name
         FROM registrations r
         JOIN users u ON r.user_id = u.id
-        JOIN events e ON r.event_id = e.id
-        JOIN clubs c ON e.club_id = c.id
+        LEFT JOIN events e ON r.event_id = e.id
+        LEFT JOIN clubs c ON e.club_id = c.id
         ORDER BY r.registered_at DESC
         LIMIT 100
       `),
+      db.query(`
+        SELECT 
+          c.id as club_id,
+          c.name as club_name,
+          c.slug as club_slug,
+          c.color as club_color,
+          e.id as event_id,
+          e.name as event_name,
+          e.event_code,
+          e.category,
+          e.venue,
+          COALESCE(e.fee, 0) as event_fee,
+          e.capacity,
+          e.date_start,
+          e.start_time,
+          e.day_number,
+          COUNT(r.id) FILTER (WHERE r.status = 'CONFIRMED') as confirmed_count,
+          COUNT(r.id) FILTER (WHERE r.status = 'PENDING') as pending_count,
+          COUNT(r.id) as total_count,
+          COUNT(a.id) FILTER (WHERE a.status = 'SUCCESS') as checked_in_count,
+          COALESCE(SUM(r.amount_paid) FILTER (WHERE r.status = 'CONFIRMED'), 0) as total_revenue
+        FROM events e
+        JOIN clubs c ON e.club_id = c.id
+        LEFT JOIN registrations r ON r.event_id = e.id
+        LEFT JOIN attendance a ON a.event_id = e.id AND a.user_id = r.user_id AND a.status = 'SUCCESS'
+        WHERE e.status != 'cancelled'
+        GROUP BY c.id, c.name, c.slug, c.color, e.id, e.name, e.event_code, e.category, e.venue, e.fee, e.capacity, e.date_start, e.start_time, e.day_number
+        ORDER BY c.name ASC, confirmed_count DESC
+      `),
     ]);
+
+    const pRow = paymentStats.rows[0] || {};
 
     return success({
       overview: {
@@ -94,10 +138,17 @@ export async function GET(req: NextRequest) {
         total_checkins: parseInt(checkinsCount.rows[0]?.count || '0'),
         total_revenue_paise: parseInt(totalRevenue.rows[0]?.total || '0'),
         total_revenue_inr: Math.round(parseInt(totalRevenue.rows[0]?.total || '0') / 100),
+        paid_payments_count: parseInt(pRow.paid_count || '0'),
+        created_payments_count: parseInt(pRow.created_count || '0'),
+        failed_payments_count: parseInt(pRow.failed_count || '0'),
+        refunded_payments_count: parseInt(pRow.refunded_count || '0'),
+        platform_revenue_inr: Math.round(parseInt(pRow.platform_revenue_paise || '0') / 100),
+        event_revenue_inr: Math.round(parseInt(pRow.event_revenue_paise || '0') / 100),
       },
       branch_stats: branchStats.rows,
       year_stats: yearStats.rows,
       club_stats: clubStats.rows,
+      club_event_reports: clubEventReports.rows || [],
       recent_users: recentUsers.rows,
       recent_registrations: recentRegistrations.rows,
     });

@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import seedEvents from './seedEvents.json';
 
 export interface MockUser {
   id: string;
@@ -73,6 +74,8 @@ export interface MockEvent {
   coordinators: any[];
   poster_url: string;
   rulebook_url: string;
+  unstop_url?: string;
+  registration_url?: string;
   status: string;
   registration_open: boolean;
   is_popular: boolean;
@@ -143,53 +146,7 @@ const USERS_DATA: MockUser[] = [
 ];
 
 // Flagship events seeded for development and testing
-const EVENTS_DATA: MockEvent[] = [
-  {
-    id: 'evt-agentic-ai-n8n',
-    club_id: 'club-3', // ReLU
-    created_by: 'user-admin-relu',
-    name: 'Agentic AI & n8n Automation Hackathon',
-    event_code: 'RELU-AGNT',
-    tagline: 'Build autonomous multi-agent pipelines & workflows with n8n and LLMs',
-    short_description: 'Design, orchestrate, and deploy autonomous agentic AI workflows integrating open-source n8n automation, LLMs, and real-time APIs.',
-    full_description: 'Join the premier Agentic AI challenge of PARINAAM 2026 organized by ReLU. Teams will design and demonstrate end-to-end multi-agent systems using n8n and state-of-the-art LLMs, tackling enterprise automation, workflow orchestration, and generative intelligence.',
-    category: 'Coding & Hackathon',
-    tags: ['Agentic AI', 'n8n', 'LLMs', 'Automation', 'AI/ML'],
-    venue: 'AI & Data Analytics Lab, Amrita Vishwa Vidyapeetham',
-    date_start: '2026-10-11',
-    date_end: '2026-10-12',
-    start_time: '10:00 AM',
-    end_time: '05:00 PM',
-    day_number: 1,
-    min_team_size: 1,
-    max_team_size: 3,
-    capacity: 100,
-    enrolled: 18,
-    fee: 0,
-    prize_pool: '₹35,000 + Cloud Credits',
-    eligibility: 'Open to all undergraduate and postgraduate engineering students.',
-    rules: [
-      'Teams must design functional workflows using n8n community or self-hosted instances.',
-      'Workflows must include at least 2 autonomous agentic loops or tool-use steps.',
-      'All code and automation schemas must be submitted to GitHub.'
-    ],
-    rounds: [
-      { name: 'Round 1: Architecture Pitch', description: 'Present agentic design, tools, and trigger model', date: 'Day 1' },
-      { name: 'Round 2: Live Prototype Demo', description: 'End-to-end workflow execution and stress testing', date: 'Day 2' }
-    ],
-    coordinators: [
-      { name: 'Arun V.', role: 'Student Coordinator', phone: '9876543210', email: 'arun@relu.amrita.edu' }
-    ],
-    poster_url: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1000&q=80',
-    rulebook_url: '',
-    status: 'published',
-    registration_open: true,
-    is_popular: true,
-    is_featured: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-];
+const EVENTS_DATA: MockEvent[] = (seedEvents as unknown as MockEvent[]);
 
 // Global in-memory storage singleton
 class MockDbEngine {
@@ -199,6 +156,7 @@ class MockDbEngine {
   registrations: any[] = [];
   attendance: any[] = [];
   payments: any[] = [];
+  sponsorship_applications: any[] = [];
   config: Record<string, string> = {
     platform_fee: '99',
     fest_name: 'PARINAAM 2026',
@@ -206,6 +164,89 @@ class MockDbEngine {
     registration_open: 'true',
     amrita_domain: 'av.students.amrita.edu',
   };
+
+  constructor() {
+    this.syncWithProduction();
+  }
+
+  async syncWithProduction(): Promise<void> {
+    try {
+      if (typeof fetch !== 'undefined') {
+        const res = await fetch('https://parinaam.online/api/events?status=published&limit=100', {
+          headers: { 'Accept': 'application/json' },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.success && Array.isArray(json?.data?.events)) {
+            const liveEvents: any[] = json.data.events;
+            const clubSlugToId: Record<string, string> = {
+              'chakravyuha': 'club-1',
+              'prachurya': 'club-2',
+              'relu': 'club-3',
+              'avisruta': 'club-4',
+              'salesforce-agentblazer': 'club-5',
+              'saptaswara': 'club-6',
+              'robotics': 'club-7',
+              'ieee': 'club-8',
+              'avinya': 'club-9',
+              'adivika': 'club-10',
+              'nrityasparsh': 'club-11',
+              'drisya': 'club-12',
+            };
+            for (const le of liveEvents) {
+              const mappedClubId = clubSlugToId[le.club_slug] || le.club_id || 'club-1';
+              const existingIdx = this.events.findIndex(e => e.id === le.id || e.event_code === le.event_code);
+              const formattedEvent: MockEvent = {
+                id: le.id,
+                club_id: mappedClubId,
+                created_by: `usr-admin-${le.club_slug || 'chakravyuha'}`,
+                name: le.name,
+                event_code: le.event_code,
+                tagline: le.tagline || '',
+                short_description: le.short_description || '',
+                full_description: le.full_description || le.short_description || '',
+                category: le.category || 'General',
+                tags: Array.isArray(le.tags) ? le.tags : [],
+                venue: le.venue || 'Amrita Campus',
+                date_start: le.date_start ? le.date_start.split('T')[0] : '2026-10-11',
+                date_end: le.date_end ? le.date_end.split('T')[0] : '2026-10-12',
+                start_time: le.start_time || '10:00 AM',
+                end_time: le.end_time || '05:00 PM',
+                day_number: Number(le.day_number) || 1,
+                min_team_size: Number(le.min_team_size) || 1,
+                max_team_size: Number(le.max_team_size) || 1,
+                capacity: Number(le.capacity) || 100,
+                enrolled: Number(le.enrolled) || 0,
+                fee: Number(le.fee) || 0,
+                prize_pool: le.prize_pool || '',
+                eligibility: le.eligibility || 'Open to all students',
+                rules: Array.isArray(le.rules) ? le.rules : [],
+                rounds: Array.isArray(le.rounds) ? le.rounds : [],
+                coordinators: Array.isArray(le.coordinators) ? le.coordinators : [],
+                poster_url: le.poster_url || '',
+                rulebook_url: le.rulebook_url || '',
+                unstop_url: le.unstop_url || '',
+                registration_url: le.registration_url || '',
+                status: le.status || 'published',
+                registration_open: le.registration_open !== false,
+                is_popular: Boolean(le.is_popular),
+                is_featured: Boolean(le.is_featured),
+                created_at: le.created_at || new Date().toISOString(),
+                updated_at: le.updated_at || new Date().toISOString(),
+              };
+              if (existingIdx >= 0) {
+                this.events[existingIdx] = { ...this.events[existingIdx], ...formattedEvent };
+              } else {
+                this.events.push(formattedEvent);
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // offline or unreachable
+    }
+  }
 
   private _filterEvents(qLower: string, params: any[] = []): MockEvent[] {
     let list = [...this.events];
@@ -231,27 +272,115 @@ class MockDbEngine {
     }
 
     // Category filter
-    if (qLower.includes('category =') || qLower.includes('e.category =')) {
-      const knownCats = ['technical', 'cultural', 'coding & hackathon', 'robotics', 'gaming', 'workshops', 'quiz & literary', 'arts & media', 'management'];
-      const catParam = params.find(p => typeof p === 'string' && knownCats.includes(p.toLowerCase()));
-      if (catParam) {
-        list = list.filter(e => e.category.toLowerCase() === catParam.toLowerCase());
+    const isCategoryFilter = qLower.includes('e.category =') || 
+                             qLower.includes('category =') || 
+                             (qLower.includes('category ilike') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('cultural') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('dance') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('music') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('gaming') && !qLower.includes('e.name ilike')) ||
+                             (qLower.includes('robotics') && !qLower.includes('e.name ilike'));
+
+    if (isCategoryFilter) {
+      if (qLower.includes('dance') || qLower.includes('nrityasparsh')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('dance') || 
+                 tagsStr.includes('dance') || tagsStr.includes('garba') || tagsStr.includes('dandiya') ||
+                 club?.slug === 'nrityasparsh';
+        });
+      } else if (qLower.includes('music') || qLower.includes('saptaswara')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('music') || 
+                 tagsStr.includes('music') || tagsStr.includes('vocal') || tagsStr.includes('band') ||
+                 club?.slug === 'saptaswara' || club?.slug === 'avisruta';
+        });
+      } else if (qLower.includes('media') || qLower.includes('theatre') || qLower.includes('drisya')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+          return e.category.toLowerCase().includes('media') || e.category.toLowerCase().includes('art') ||
+                 tagsStr.includes('theatre') || tagsStr.includes('film') || tagsStr.includes('art') ||
+                 club?.slug === 'drisya' || club?.slug === 'prachurya';
+        });
+      } else if (qLower.includes('cultural')) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          return e.category.toLowerCase().includes('cultural') || 
+                 ['prachurya', 'saptaswara', 'nrityasparsh', 'drisya'].includes(club?.slug || '');
+        });
+      } else if (qLower.includes('coding') || qLower.includes('hackathon')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('coding') || 
+          e.category.toLowerCase().includes('hackathon') ||
+          (e.name || '').toLowerCase().includes('hackathon') ||
+          (e.name || '').toLowerCase().includes('challenge') ||
+          (e.tags || []).some(t => t.toLowerCase().includes('hackathon') || t.toLowerCase().includes('coding'))
+        );
+      } else if (qLower.includes('gaming')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('gaming') || 
+          (e.tags || []).some(t => t.toLowerCase().includes('gaming') || t.toLowerCase().includes('badminton') || t.toLowerCase().includes('sports') || t.toLowerCase().includes('mafia'))
+        );
+      } else if (qLower.includes('robotics')) {
+        list = list.filter(e => 
+          e.category.toLowerCase().includes('robotics') || 
+          (e.name || '').toLowerCase().includes('robot') ||
+          (e.tags || []).some(t => t.toLowerCase().includes('robot'))
+        );
+      } else {
+        const knownCats = ['technical', 'cultural', 'coding & hackathon', 'robotics', 'gaming', 'workshops', 'quiz & literary', 'arts & media', 'management', 'dance', 'music', 'film & media'];
+        const catParam = params.find(p => typeof p === 'string' && knownCats.some(k => p.toLowerCase().includes(k)));
+        if (catParam) {
+          const cleanCat = catParam.replace(/%/g, '').toLowerCase().trim();
+          list = list.filter(e => 
+            e.category.toLowerCase().includes(cleanCat) ||
+            (e.tags || []).some(t => t.toLowerCase().includes(cleanCat))
+          );
+        }
       }
     }
 
     // Search filter (ILIKE)
-    if (qLower.includes('ilike')) {
-      const searchParam = params.find(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'));
-      if (searchParam) {
-        const cleanTerm = searchParam.replace(/%/g, '').toLowerCase().trim();
-        if (cleanTerm) {
-          list = list.filter(e => 
-            (e.name || '').toLowerCase().includes(cleanTerm) ||
-            (e.tagline || '').toLowerCase().includes(cleanTerm) ||
-            (e.short_description || '').toLowerCase().includes(cleanTerm) ||
-            (e.event_code || '').toLowerCase().includes(cleanTerm)
-          );
-        }
+    if (qLower.includes('e.name ilike') || qLower.includes('e.tagline ilike')) {
+      const searchTerms = params
+        .filter(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'))
+        .map(p => (p as string).replace(/%/g, '').toLowerCase().trim())
+        .filter(Boolean);
+
+      if (searchTerms.length > 0) {
+        list = list.filter(e => {
+          const club = this.clubs.find(c => c.id === e.club_id);
+          const clubName = (club?.name || '').toLowerCase();
+          const clubSlug = (club?.slug || '').toLowerCase();
+          const tagsStr = (e.tags || []).join(' ').toLowerCase();
+
+          return searchTerms.some(term => {
+            const isMatch = 
+              (e.name || '').toLowerCase().includes(term) ||
+              (e.tagline || '').toLowerCase().includes(term) ||
+              (e.short_description || '').toLowerCase().includes(term) ||
+              (e.event_code || '').toLowerCase().includes(term) ||
+              (e.venue || '').toLowerCase().includes(term) ||
+              (e.category || '').toLowerCase().includes(term) ||
+              clubName.includes(term) ||
+              clubSlug.includes(term) ||
+              tagsStr.includes(term);
+
+            if (isMatch) return true;
+
+            // Handle spelling variants
+            if (term === 'drsya' && (clubSlug.includes('drisya') || clubName.includes('drisya'))) return true;
+            if (term === 'drisya' && (clubSlug.includes('drsya') || clubName.includes('drsya'))) return true;
+            if (term === 'avisrutha' && (clubSlug.includes('avisruta') || clubName.includes('avisruta'))) return true;
+            if (term === 'harness' && (e.name || '').toLowerCase().includes('harness')) return true;
+
+            return false;
+          });
+        });
       }
     }
 
@@ -375,7 +504,7 @@ class MockDbEngine {
     }
 
     // 7. SELECT events with club join
-    if (qLower.includes('from events e') || (qLower.includes('from events') && !qLower.includes('update events'))) {
+    if ((qLower.includes('from events e') || (qLower.includes('from events') && !qLower.includes('update events'))) && !qLower.includes('count(*)')) {
       if (qLower.includes('where e.id =') || qLower.includes('where id =')) {
         const eventId = params[0];
         const event = this.events.find(e => e.id === eventId);
@@ -431,7 +560,7 @@ class MockDbEngine {
         venue, date_start, date_end, start_time, end_time,
         day_number, min_team_size, max_team_size, capacity,
         fee, prize_pool, eligibility, rules, rounds,
-        coordinators, poster_url, rulebook_url, status,
+        coordinators, poster_url, rulebook_url, unstop_url, registration_url, status,
         registration_open, is_popular, is_featured
       ] = params;
 
@@ -459,11 +588,13 @@ class MockDbEngine {
         fee: fee || 0,
         prize_pool: prize_pool || '',
         eligibility: eligibility || '',
-        rules: rules ? JSON.parse(rules) : [],
-        rounds: rounds ? JSON.parse(rounds) : [],
-        coordinators: coordinators ? JSON.parse(coordinators) : [],
+        rules: rules ? (typeof rules === 'string' ? JSON.parse(rules) : rules) : [],
+        rounds: rounds ? (typeof rounds === 'string' ? JSON.parse(rounds) : rounds) : [],
+        coordinators: coordinators ? (typeof coordinators === 'string' ? JSON.parse(coordinators) : coordinators) : [],
         poster_url: poster_url || '',
         rulebook_url: rulebook_url || '',
+        unstop_url: unstop_url || '',
+        registration_url: registration_url || unstop_url || '',
         status: status || 'published',
         registration_open: registration_open !== false,
         is_popular: Boolean(is_popular),
@@ -486,9 +617,9 @@ class MockDbEngine {
       return { rows, rowCount: rows.length };
     }
 
-    // 10. ADMIN STATS & PAYMENTS
-    if (qLower.includes('sum(amount_paise)') || qLower.includes('from payments')) {
-      const totalPaise = this.payments.reduce((acc, p) => acc + (p.status === 'captured' ? p.amount_paise : 0), 0);
+    // 10. ADMIN STATS REVENUE
+    if (qLower.includes('sum(amount_paise)') || qLower.includes('sum(amount)')) {
+      const totalPaise = this.payments.reduce((acc, p) => acc + (p.status === 'captured' || p.status === 'paid' ? (p.amount || 0) : 0), 0);
       return { rows: [{ total: totalPaise.toString() }], rowCount: 1 };
     }
 
@@ -569,11 +700,15 @@ class MockDbEngine {
       return { rows, rowCount: rows.length };
     }
 
-    // 13. ADMIN USERS LIST
+    // 13. ADMIN USERS LIST & SINGLE USER
     if (qLower.includes('from users u left join clubs c') || qLower.includes('from users u')) {
       let filtered = [...this.users];
+      if (qLower.includes('where u.id =') && params && params[0]) {
+        filtered = filtered.filter(u => u.id === params[0] || u.email === params[0]);
+      }
       const rows = filtered.map(u => {
         const club = this.clubs.find(c => c.id === u.club_id);
+        const confirmedRegs = this.registrations.filter(r => (r.user_id === u.id || r.user_id === u.email) && r.status === 'CONFIRMED').length;
         return {
           id: u.id,
           full_name: u.full_name,
@@ -592,7 +727,7 @@ class MockDbEngine {
           id_card_url: u.id_card_url || '',
           created_at: u.created_at || new Date().toISOString(),
           club_name: club?.name || null,
-          confirmed_registrations: '0',
+          confirmed_registrations: confirmedRegs.toString(),
         };
       });
       return { rows, rowCount: rows.length };
@@ -613,14 +748,21 @@ class MockDbEngine {
     }
 
     // 15. DELETE FROM OTHER TABLES
+    if (qLower.startsWith('delete from events')) {
+      const id = params[0]?.toString();
+      this.events = this.events.filter(e => e.id !== id);
+      this.registrations = this.registrations.filter(r => r.event_id !== id);
+      this.attendance = this.attendance.filter(a => a.event_id !== id);
+      return { rows: [], rowCount: 1 };
+    }
     if (qLower.startsWith('delete from registrations')) {
       const id = params[0]?.toString();
-      this.registrations = this.registrations.filter(r => r.user_id !== id && r.id !== id);
+      this.registrations = this.registrations.filter(r => r.user_id !== id && r.id !== id && r.event_id !== id);
       return { rows: [], rowCount: 1 };
     }
     if (qLower.startsWith('delete from attendance')) {
       const id = params[0]?.toString();
-      this.attendance = this.attendance.filter(a => a.user_id !== id && a.id !== id);
+      this.attendance = this.attendance.filter(a => a.user_id !== id && a.id !== id && a.event_id !== id);
       return { rows: [], rowCount: 1 };
     }
     if (qLower.startsWith('delete from payments')) {
@@ -714,16 +856,62 @@ class MockDbEngine {
       } else if (qLower.includes('user_id =')) {
         result = result.filter(r => r.user_id === params[0]);
       }
+      if (qLower.includes('join events') || qLower.includes('registration_id') || qLower.includes('event_name') || qLower.includes('club_name')) {
+        const enriched = result.map(r => {
+          const event = this.events.find(e => e.id === r.event_id);
+          const club = event ? this.clubs.find(c => c.id === event.club_id) : undefined;
+          const att = this.attendance.find(a => a.user_id === r.user_id && a.event_id === r.event_id && a.status === 'SUCCESS');
+          return {
+            ...r,
+            registration_id: r.id,
+            registration_status: r.status,
+            payment_status: r.payment_status || 'paid',
+            amount_paid: r.amount_paid || 0,
+            team_name: r.team_name || null,
+            team_members: r.team_members || null,
+            registered_at: r.registered_at,
+            confirmed_at: r.confirmed_at || r.registered_at,
+            event_id: r.event_id,
+            event_name: event?.name || 'Festival Event Registration',
+            event_code: event?.event_code || 'EVT',
+            category: event?.category || 'General',
+            venue: event?.venue || 'Amrita Campus',
+            date_start: event?.date_start || '2026-10-15',
+            start_time: event?.start_time || '10:00 AM',
+            end_time: event?.end_time || '05:00 PM',
+            day_number: event?.day_number || 1,
+            event_fee: event?.fee || r.amount_paid || 0,
+            fee: event?.fee || r.amount_paid || 0,
+            poster_url: event?.poster_url || '',
+            club_id: club?.id || event?.club_id || 'club-1',
+            club_name: club?.name || 'PARINAAM Fest',
+            club_slug: club?.slug || 'parinaam',
+            club_color: club?.color || '#9333ea',
+            attendance_id: att?.id || null,
+            checked_in_at: att?.scanned_at || null,
+            attendance_status: att?.status || null,
+          };
+        });
+        return { rows: enriched, rowCount: enriched.length };
+      }
       return { rows: result, rowCount: result.length };
     }
 
     // 20. SELECT FROM PAYMENTS
     if (qLower.includes('from payments')) {
       let result = [...this.payments];
-      if (qLower.includes('razorpay_order_id =')) {
-        result = result.filter(p => p.razorpay_order_id === params[0] || p.razorpay_order_id === params[1]);
+      if (qLower.includes('cf_order_id =') || qLower.includes('razorpay_order_id =')) {
+        result = result.filter(
+          p =>
+            p.cf_order_id === params[0] ||
+            p.cf_order_id === params[1] ||
+            p.razorpay_order_id === params[0] ||
+            p.razorpay_order_id === params[1] ||
+            p.id === params[0] ||
+            p.id === params[1]
+        );
       } else if (qLower.includes('id =')) {
-        result = result.filter(p => p.id === params[0]);
+        result = result.filter(p => p.id === params[0] || p.cf_order_id === params[0] || p.razorpay_order_id === params[0]);
       } else if (qLower.includes('user_id =')) {
         result = result.filter(p => p.user_id === params[0]);
       }
@@ -732,11 +920,11 @@ class MockDbEngine {
 
     // 21. UPDATE REGISTRATIONS
     if (qLower.startsWith('update registrations')) {
-      const paymentId = params.find(p => typeof p === 'string' && (p.startsWith('pay-') || p.startsWith('order_')));
+      const paymentId = params.find(p => typeof p === 'string' && (p.startsWith('pay-') || p.startsWith('order_') || p.startsWith('cf_')));
       const userId = params.find(p => typeof p === 'string' && (p.startsWith('usr-') || p.startsWith('part-')));
       let updatedCount = 0;
       this.registrations.forEach(r => {
-        if ((paymentId && r.payment_id === paymentId) || (userId && r.user_id === userId)) {
+        if ((paymentId && (r.payment_id === paymentId || r.payment_order_id === paymentId)) || (userId && r.user_id === userId)) {
           if (qLower.includes("status = 'confirmed'") || qLower.includes("status = 'CONFIRMED'")) {
             r.status = 'CONFIRMED';
             r.payment_status = 'paid';
@@ -754,12 +942,13 @@ class MockDbEngine {
     // 22. UPDATE PAYMENTS
     if (qLower.startsWith('update payments')) {
       const payId = params[params.length - 1] || params[0];
-      const payment = this.payments.find(p => p.id === payId || p.razorpay_order_id === payId);
+      const payment = this.payments.find(p => p.id === payId || p.cf_order_id === payId || p.razorpay_order_id === payId);
       if (payment) {
         if (qLower.includes("status = 'paid'")) payment.status = 'paid';
         if (qLower.includes("status = 'failed'")) payment.status = 'failed';
         if (qLower.includes("status = 'refunded'")) payment.status = 'refunded';
-        if (params[0] && typeof params[0] === 'string' && params[0].startsWith('pay_')) {
+        if (params[0] && typeof params[0] === 'string' && (params[0].startsWith('pay_') || params[0].startsWith('cfpay_'))) {
+          payment.cf_payment_id = params[0];
           payment.razorpay_payment_id = params[0];
         }
         return { rows: [payment], rowCount: 1 };
@@ -801,6 +990,61 @@ class MockDbEngine {
       return { rows: [event], rowCount: 1 };
     }
 
+    // 24. SPONSORSHIP APPLICATIONS (INSERT, SELECT, UPDATE)
+    if (qLower.includes('sponsorship_applications')) {
+      if (qLower.startsWith('insert into sponsorship_applications')) {
+        const app = {
+          id: uuidv4(),
+          company_name: params[0] || 'Company',
+          contact_person: params[1] || 'Contact',
+          email: params[2] || '',
+          phone: params[3] || '',
+          designation: params[4] || null,
+          website: params[5] || null,
+          tier: params[6] || 'co_sponsor',
+          budget: params[7] || null,
+          message: params[8] || null,
+          status: 'PENDING',
+          reviewed_note: null,
+          reviewed_by: null,
+          reviewed_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        this.sponsorship_applications.unshift(app);
+        return { rows: [app], rowCount: 1 };
+      }
+
+      if (qLower.startsWith('select count(*)')) {
+        let list = [...this.sponsorship_applications];
+        if (qLower.includes("status = 'pending'")) list = list.filter(a => a.status === 'PENDING');
+        if (qLower.includes("status = 'confirmed'")) list = list.filter(a => a.status === 'CONFIRMED');
+        if (qLower.includes("status = 'rejected'")) list = list.filter(a => a.status === 'REJECTED');
+        return { rows: [{ count: list.length.toString(), total_count: list.length, pending_count: list.filter(a => a.status === 'PENDING').length, confirmed_count: list.filter(a => a.status === 'CONFIRMED').length, rejected_count: list.filter(a => a.status === 'REJECTED').length }], rowCount: 1 };
+      }
+
+      if (qLower.startsWith('select') && qLower.includes('from sponsorship_applications')) {
+        let list = [...this.sponsorship_applications];
+        const statusParam = params.find(p => typeof p === 'string' && ['PENDING', 'CONFIRMED', 'REJECTED'].includes(p.toUpperCase()));
+        if (statusParam) {
+          list = list.filter(a => a.status === statusParam.toUpperCase());
+        }
+        return { rows: list, rowCount: list.length };
+      }
+
+      if (qLower.startsWith('update sponsorship_applications')) {
+        const app = this.sponsorship_applications.find(a => a.id === params[3] || a.id === params[0] || a.id === params[params.length - 1]);
+        if (app) {
+          app.status = params[0] || app.status;
+          app.reviewed_note = params[1] || app.reviewed_note;
+          app.reviewed_by = params[2] || app.reviewed_by;
+          app.reviewed_at = new Date().toISOString();
+          app.updated_at = new Date().toISOString();
+          return { rows: [app], rowCount: 1 };
+        }
+      }
+    }
+
     // Generic fallback for updates & deletes
     return { rows: [], rowCount: 0 };
   }
@@ -814,4 +1058,7 @@ declare global {
 export const mockDb = global.__parinaam_mock_db || new MockDbEngine();
 if (process.env.NODE_ENV !== 'production') {
   global.__parinaam_mock_db = mockDb;
+  if (mockDb.events.length < EVENTS_DATA.length) {
+    mockDb.events = [...EVENTS_DATA];
+  }
 }

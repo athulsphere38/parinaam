@@ -49,11 +49,11 @@ export const SponsorsSection = () => {
   ];
 
   return (
-    <section id="sponsors" className="scroll-mt-20 py-20 sm:py-28 bg-[#04020a] border-y border-purple-950/70 relative overflow-hidden">
+    <section id="sponsors" className="scroll-mt-20 py-20 sm:py-28 bg-[#04020a] border-y border-purple-950/70 relative overflow-hidden w-full max-w-full">
       
       {/* Dynamic Background Atmospheric Orbs */}
-      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-purple-600/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-fuchsia-600/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-14">
         

@@ -180,9 +180,13 @@ export const FestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPass(newPass);
     setRegistrations(newRegistrations);
 
-    localStorage.setItem(STORAGE_KEYS.PARTICIPANT, JSON.stringify(newParticipant));
-    localStorage.setItem(STORAGE_KEYS.PASS, JSON.stringify(newPass));
-    localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(newRegistrations));
+    try {
+      localStorage.setItem(STORAGE_KEYS.PARTICIPANT, JSON.stringify(newParticipant));
+      localStorage.setItem(STORAGE_KEYS.PASS, JSON.stringify(newPass));
+      localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(newRegistrations));
+    } catch (e) {
+      console.warn('Storage unavailable:', e);
+    }
 
     // Save in authoritative lookup DB
     seedRecordInDatabase(newParticipant, newPass, newRegistrations);
@@ -212,9 +216,13 @@ export const FestProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPass(record.pass);
         setRegistrations(record.registrations);
 
-        localStorage.setItem(STORAGE_KEYS.PARTICIPANT, JSON.stringify(record.participant));
-        localStorage.setItem(STORAGE_KEYS.PASS, JSON.stringify(record.pass));
-        localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(record.registrations));
+        try {
+          localStorage.setItem(STORAGE_KEYS.PARTICIPANT, JSON.stringify(record.participant));
+          localStorage.setItem(STORAGE_KEYS.PASS, JSON.stringify(record.pass));
+          localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(record.registrations));
+        } catch {
+          // ignore
+        }
         return true;
       }
     } catch (e) {
@@ -227,9 +235,13 @@ export const FestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setParticipant(null);
     setPass(null);
     setRegistrations([]);
-    localStorage.removeItem(STORAGE_KEYS.PARTICIPANT);
-    localStorage.removeItem(STORAGE_KEYS.PASS);
-    localStorage.removeItem(STORAGE_KEYS.REGISTRATIONS);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.PARTICIPANT);
+      localStorage.removeItem(STORAGE_KEYS.PASS);
+      localStorage.removeItem(STORAGE_KEYS.REGISTRATIONS);
+    } catch {
+      // ignore
+    }
   };
 
   const getRegistrationByToken = (token: string) => {
@@ -286,7 +298,11 @@ export const FestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const updatedHistory = [duplicateRecord, ...checkInHistory];
       setCheckInHistory(updatedHistory);
-      localStorage.setItem(STORAGE_KEYS.CHECK_INS, JSON.stringify(updatedHistory));
+      try {
+        localStorage.setItem(STORAGE_KEYS.CHECK_INS, JSON.stringify(updatedHistory));
+      } catch {
+        // ignore
+      }
 
       return {
         success: false,
@@ -311,7 +327,11 @@ export const FestProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updatedHistory = [newCheckIn, ...checkInHistory];
     setCheckInHistory(updatedHistory);
-    localStorage.setItem(STORAGE_KEYS.CHECK_INS, JSON.stringify(updatedHistory));
+    try {
+      localStorage.setItem(STORAGE_KEYS.CHECK_INS, JSON.stringify(updatedHistory));
+    } catch {
+      // ignore
+    }
 
     return {
       success: true,

@@ -18,6 +18,17 @@ export const ProfileCompletionModal: React.FC = () => {
     setDismissed(false);
   }, [pathname]);
 
+  // Dismiss on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDismissed(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   if (loading || !user || user.role !== 'student') return null;
 
 

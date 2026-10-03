@@ -3,6 +3,9 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
 import { success, error, unauthorized, forbidden, serverError } from '@/lib/apiResponse';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET /api/admin/users — all users with filters
 export async function GET(req: NextRequest) {
   try {

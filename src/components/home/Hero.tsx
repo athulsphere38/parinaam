@@ -51,9 +51,14 @@ export const Hero = () => {
   const passButtonLabel = user ? 'SEE DELEGATE PASS' : 'GET DELEGATE PASS';
 
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 border-b border-purple-900/50 overflow-hidden fest-grid-bg bg-[#05030a]">
+    <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 border-b border-purple-900/50 overflow-hidden w-full max-w-full fest-grid-bg bg-[#05030a]">
       
-      {/* Live Interactive Background (Dynamic Magnetic Particles, Laser Cursor Web, Shockwaves & Parallax Glows) */}
+      {/* Mood Indigo Ambient Spotlights */}
+      <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 lg:w-[750px] h-64 sm:h-96 lg:h-[450px] bg-fuchsia-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/3 right-4 w-64 sm:w-96 lg:w-[650px] h-64 sm:h-96 lg:h-[550px] bg-purple-600/20 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 left-10 w-48 sm:w-80 lg:w-[400px] h-48 sm:h-80 lg:h-[400px] bg-amber-500/10 rounded-full blur-[90px] sm:blur-[130px] pointer-events-none" />
+
+      {/* Interactive Particle Canvas */}
       <InteractiveHeroBackground />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
@@ -80,35 +85,35 @@ export const Hero = () => {
             </p>
 
             {/* Date & Location Pill Summary */}
-            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-medium text-slate-200 pt-1">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-950/70 border border-purple-800/80">
-                <Calendar className="w-4 h-4 text-fuchsia-400" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-slate-200 pt-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-purple-950/70 border border-purple-800/80 text-[11px] sm:text-sm">
+                <Calendar className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-fuchsia-400 shrink-0" />
                 <span className="font-mono">{FEST_CONFIG.dates}</span>
               </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-950/70 border border-purple-800/80">
-                <MapPin className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-purple-950/70 border border-purple-800/80 text-[11px] sm:text-sm">
+                <MapPin className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-amber-400 shrink-0" />
                 <span>Amaravati Campus</span>
               </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-950/70 border border-purple-800/80">
-                <Trophy className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-purple-950/70 border border-purple-800/80 text-[11px] sm:text-sm">
+                <Trophy className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-emerald-400 shrink-0" />
                 <span className="font-mono font-semibold">{FEST_CONFIG.totalPrizePool} Prize</span>
               </div>
             </div>
 
             {/* Action CTAs */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-3">
               <Link
                 href={passHref}
-                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-fuchsia-600 hover:from-fuchsia-500 hover:to-purple-500 text-white font-bold text-sm sm:text-base tracking-wide shadow-purple-glow flex items-center justify-center gap-3 transition-all active:scale-95 border border-fuchsia-400/40 text-center"
+                className="px-4 sm:px-8 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-fuchsia-600 hover:from-fuchsia-500 hover:to-purple-500 text-white font-bold text-xs sm:text-base tracking-wide shadow-purple-glow flex items-center justify-center gap-2.5 sm:gap-3 transition-all active:scale-95 border border-fuchsia-400/40 text-center"
               >
-                <Ticket className="w-5 h-5 text-amber-300" />
+                <Ticket className="w-4 sm:w-5 h-4 sm:h-5 text-amber-300 shrink-0" />
                 <span>{passButtonLabel}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0" />
               </Link>
 
               <Link
                 href="/events"
-                className="px-7 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-sm sm:text-base border border-fuchsia-800/80 transition-all text-center tracking-wide"
+                className="px-4 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold text-xs sm:text-base border border-fuchsia-800/80 transition-all text-center tracking-wide"
               >
                 EXPLORE COMPETITIONS
               </Link>
@@ -127,11 +132,11 @@ export const Hero = () => {
               
               {/* Header Label inside Card */}
               <div className="flex items-center justify-between pb-3 mb-2 border-b border-purple-900/40 text-xs font-mono">
-                <span className="text-purple-300 flex items-center gap-2 font-bold tracking-wide">
-                  <Building2 className="w-4 h-4 text-fuchsia-400 animate-pulse" />
+                <span className="text-purple-300 flex items-center gap-2 font-bold tracking-wide text-[11px] sm:text-xs">
+                  <Building2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-fuchsia-400 animate-pulse shrink-0" />
                   AMRITA VISHWA VIDYAPEETHAM
                 </span>
-                <span className="text-amber-400 font-bold px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30">
+                <span className="text-amber-400 font-bold px-2 sm:px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-xs">
                   AMARAVATI
                 </span>
               </div>
@@ -158,15 +163,15 @@ export const Hero = () => {
               </div>
 
               {/* Bottom Details Strip */}
-              <div className="relative z-30 mt-3.5 px-1 flex items-center justify-between text-xs font-mono text-slate-400 pointer-events-auto">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-                  MAIN ACADEMIC & INNOVATION COMPLEX
+              <div className="relative z-30 mt-3.5 px-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs font-mono text-slate-400 pointer-events-auto">
+                <span className="flex items-center gap-1.5 text-slate-300 text-[11px] sm:text-xs truncate min-w-0">
+                  <Sparkles className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />
+                  <span className="truncate">MAIN ACADEMIC & INNOVATION COMPLEX</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowVenueModal(true)}
-                  className="relative z-30 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500/35 border border-fuchsia-500/50 hover:border-fuchsia-400 text-fuchsia-300 hover:text-white font-bold transition-all text-xs font-mono shadow-[0_0_15px_rgba(217,70,239,0.35)] hover:scale-105 active:scale-95 cursor-pointer pointer-events-auto select-none"
+                  className="relative z-30 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500/35 border border-fuchsia-500/50 hover:border-fuchsia-400 text-fuchsia-300 hover:text-white font-bold transition-all text-xs font-mono shadow-[0_0_15px_rgba(217,70,239,0.35)] hover:scale-105 active:scale-95 cursor-pointer pointer-events-auto select-none shrink-0"
                 >
                   <span className="pointer-events-none">FESTIVAL VENUE</span>
                   <ExternalLink className="w-3.5 h-3.5 text-fuchsia-400 pointer-events-none" />

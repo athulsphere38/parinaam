@@ -37,34 +37,53 @@ export const CustomCursor = () => {
     if ('ontouchstart' in window) { isTouch.current = true; return; }
 
     const moveDot = (e: MouseEvent) => {
-      pos.current = { x: e.clientX, y: e.clientY };
-      if (dotRef.current) {
-        dotRef.current.style.transform =
-          `translate(${e.clientX}px, ${e.clientY}px) translate(-50%,-50%)`;
+      try {
+        pos.current = { x: e.clientX, y: e.clientY };
+        if (dotRef.current) {
+          dotRef.current.style.transform =
+            `translate(${e.clientX}px, ${e.clientY}px) translate(-50%,-50%)`;
+        }
+        if (!visible) setVisible(true);
+      } catch {
+        // ignore
       }
-      if (!visible) setVisible(true);
     };
 
     const detectTarget = (e: MouseEvent) => {
-      const el = e.target as HTMLElement;
-      const isBtn     = el.closest('button, a, [role="button"], [data-cursor="hover"]');
-      const isText    = el.closest('input, textarea, [contenteditable]');
-      const isCard    = el.closest('[data-cursor="card"]');
-      const lbl       = (el.closest('[data-cursor-label]') as HTMLElement)
-                          ?.dataset?.cursorLabel ?? '';
+      try {
+        const rawTarget = e.target as any;
+        if (!rawTarget || typeof rawTarget.closest !== 'function') {
+          setState('default');
+          setLabel('');
+          return;
+        }
 
-      setLabel(lbl);
+        const isBtn  = rawTarget.closest('button, a, [role="button"], [data-cursor="hover"]');
+        const isText = rawTarget.closest('input, textarea, [contenteditable]');
+        const isCard = rawTarget.closest('[data-cursor="card"]');
+        const lbl    = (rawTarget.closest('[data-cursor-label]') as HTMLElement)?.dataset?.cursorLabel ?? '';
 
-      if (isText)   setState('text');
-      else if (isBtn || isCard) setState('hover');
-      else          setState('default');
+        setLabel(lbl);
+
+        if (isText)   setState('text');
+        else if (isBtn || isCard) setState('hover');
+        else          setState('default');
+      } catch {
+        setState('default');
+        setLabel('');
+      }
     };
 
     const onDown = () => setState('click');
     const onUp   = () => {
-      const el = document.elementFromPoint(pos.current.x, pos.current.y) as HTMLElement;
-      const isBtn = el?.closest('button, a, [role="button"]');
-      setState(isBtn ? 'hover' : 'default');
+      try {
+        if (pos.current.x < 0 || pos.current.y < 0) return;
+        const el = document.elementFromPoint(pos.current.x, pos.current.y) as any;
+        const isBtn = el && typeof el.closest === 'function' ? el.closest('button, a, [role="button"]') : null;
+        setState(isBtn ? 'hover' : 'default');
+      } catch {
+        setState('default');
+      }
     };
     const onLeave = () => setVisible(false);
     const onEnter = () => setVisible(true);

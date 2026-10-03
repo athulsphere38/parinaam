@@ -191,6 +191,61 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     description: 'The flagship computing club of Amrita Vishwa Vidyapeetham. Chakravyuha designs intense 24-hour hackathons, algorithmic coding battles, cyber forensic mysteries, and tactical LAN gaming tourneys.',
     eventsConducted: ['Code Red Hackathon', 'Cyber Forensic Mystery', 'Valorant LAN Showdown']
   },
+  {
+    id: 'club-ieee',
+    name: 'IEEE',
+    title: 'IEEE Student Branch',
+    cluster: 'Tech & Innovation',
+    category: 'Electrical, Computing & Research',
+    imageUrl: '/images/clubs/ieee.png',
+    logoUrl: '/images/clubs/ieee-emblem.png',
+    cardUrl: '/images/clubs/ieee-card.png',
+    photos: [
+      {
+        url: '/images/clubs/ieee/ieee-photo-1.jpg',
+        title: 'HACKxAMRITA 2.0 Project Presentation',
+        caption: 'Finalists pitching cutting-edge software architectures and prototype systems during the HACKxAMRITA 2.0 hackathon.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-2.jpg',
+        title: 'University Keynote & Inaugural Session',
+        caption: 'IEEE student branch coordinators welcoming faculty dignitaries and delegates at the inaugural symposium podium.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-3.jpg',
+        title: 'Research Paper Defense & Keynote',
+        caption: 'Student engineers defending peer-reviewed technical research papers and algorithmic solutions before academic panels.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-4.jpg',
+        title: 'Quantum Horizons 2026 Award Ceremony',
+        caption: 'Faculty leadership presenting cash prizes, trophies, and certificates of distinction to triumphant engineering teams.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-5.jpg',
+        title: 'Packed Auditorium Technical Lecture',
+        caption: 'Over 300 engineering delegates gathered for an advanced IEEE technical masterclass and industry symposium.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-6.jpg',
+        title: 'Hands-On Coding & Systems Workshop',
+        caption: 'Engineers collaborating intensely in the laboratory on microcontrollers, hardware interfacing, and software pipelines.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-7.jpg',
+        title: 'IEEE Student Branch Executive Committee',
+        caption: 'The core student branch leadership and volunteer teams proudly wearing IEEE credentials after hosting successful summits.'
+      },
+      {
+        url: '/images/clubs/ieee/ieee-photo-8.jpg',
+        title: 'Circuit Architecture & Schematics Showcase',
+        caption: 'Projecting electronic circuit diagrams, VLSI logic schematics, and embedded system telemetry to attendees.'
+      },
+    ],
+    caption: 'Quantum computing symposiums, SIH-style innovation marathons, and research paper defenses powering the IEEE student branch.',
+    description: 'The Institute of Electrical and Electronics Engineers (IEEE) Student Branch at Amrita Vishwa Vidyapeetham is an internationally affiliated technical collective driving deeptech research, hardware-software hackathons, and high-impact electronics symposiums. IEEE unites engineering innovators through signature summits like Quantum Horizons, hands-on microelectronics bootcamps, and HACKxAMRITA.',
+    eventsConducted: ['Quantum Horizons Tech Summit', 'HACKxAMRITA 2.0 Hackathon', 'Circuit Wars & Paper Defense', 'Hands-On Microelectronics Workshop']
+  },
 
   // ─── CLUSTER 2: ARTS & CULTURE ───────────────────────────────
   {
@@ -202,6 +257,38 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     imageUrl: '/images/clubs/prachurya.png',
     logoUrl: '/images/clubs/prachurya-emblem.png',
     cardUrl: '/images/clubs/prachurya-card.png',
+    photos: [
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-1.jpg',
+        title: 'Packed Auditorium & Debating Floor',
+        caption: 'Delegates and students packed in the university seminar hall following intense parliamentary debate rounds and quiz heats.'
+      },
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-2.jpg',
+        title: 'Grand Prize Felicitation Ceremony',
+        caption: 'Winning teams celebrating on stage with official merit certificates and national championship cash prize cheques.'
+      },
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-3.jpg',
+        title: 'Jury Evaluation & Pitch Defense',
+        caption: 'Student teams defending their case analyses, creative concepts, and technical solutions before distinguished faculty and judges.'
+      },
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-4.jpg',
+        title: 'Nightfall Fest Stage & Marquee Installation',
+        caption: 'Luminous 3D typography and open-air festival stage under evening campus spotlights for the 30-hour summit.'
+      },
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-5.jpg',
+        title: 'Core Organizing & Student Leadership Crew',
+        caption: 'The student convenors, organizers, and logistics leads assembled at the central campus atrium stage.'
+      },
+      {
+        url: '/images/clubs/prachurya/prachurya-photo-6.jpg',
+        title: 'Faculty Mentorship & Lead Convenors',
+        caption: 'Club leadership with faculty coordinators at the celebration stage following successful event execution.'
+      }
+    ],
     caption: 'Fiercely contested Parliamentary debates and national trivia rounds igniting student minds across the seminar halls.',
     description: 'Dedicated to igniting curiosity and inspiring expression ("Ignite, Inspire"), Prachurya hosts the festival\'s parliamentary debates, national general quizzes, creative writing summits, and fine arts exhibitions.',
     eventsConducted: ['Parliamentary Debate Summit', 'Mega General Quiz', 'Canvas & Calligraphy Gala']
@@ -286,6 +373,46 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     description: 'Bringing soulful harmony and roaring decibels to the techfest. Saptaswara curates electric Battle of the Bands clashes, Carnatic-Western jugalbandis, and acoustic vocal open mics.',
     eventsConducted: ['Battle of the Bands', 'Raga Symphony Fusion', 'Acoustic Unplugged Night']
   },
+  {
+    id: 'club-avisruta',
+    name: 'Avisruta',
+    title: 'Avisruta',
+    cluster: 'Arts & Culture',
+    category: 'Music, Acoustics & Cultural Vibrance',
+    imageUrl: '/images/clubs/avisruta.png',
+    logoUrl: '/images/clubs/avisruta-emblem.png',
+    cardUrl: '/images/clubs/avisruta-card.png',
+    photos: [
+      {
+        url: '/images/clubs/avisruta/avisruta-photo-1.jpg',
+        title: 'Neon Glow Sports & Cultural Arena',
+        caption: 'Students competing in the high-energy glow-in-the-dark campus tournament under vivid ultraviolet lighting.'
+      },
+      {
+        url: '/images/clubs/avisruta/avisruta-photo-2.jpg',
+        title: 'Festive Gathering & Team Spirit',
+        caption: 'Avisruta organizers and participants cheering on tournament finalists in the stadium complex.'
+      },
+      {
+        url: '/images/clubs/avisruta/avisruta-photo-3.jpg',
+        title: 'High-Decibel Campus Clashes',
+        caption: 'Spirited collegiate squads rallying under stadium floodlights during the festival tournament.'
+      },
+      {
+        url: '/images/clubs/avisruta/avisruta-photo-4.jpg',
+        title: 'Championship Matchpoint Rally',
+        caption: 'Athletes and performers demonstrating precision, agility, and team camaraderie before an enthusiastic crowd.'
+      },
+      {
+        url: '/images/clubs/avisruta/avisruta-photo-5.jpg',
+        title: 'Celebration & Victory Honors',
+        caption: 'Teams celebrating victorious championship runs and festive unity on the university grounds.'
+      },
+    ],
+    caption: 'High-decibel Battle of the Bands, soul-stirring unplugged acoustics, and electrifying neon arena experiences.',
+    description: 'The powerhouse of musical expression and vibrant campus experiences at Amrita. Avisruta curates high-energy Battle of the Bands clashes, vocal harmony showcases, acoustic open-mic jams, and signature campus spectacles like the Neon Badminton glow-in-the-dark tournament. Fostering artistic flair and spirited campus engagement, Avisruta electrifies the festival atmosphere.',
+    eventsConducted: ['Battle of the Bands', 'Avisruta Vocal Euphoria', 'Neon Badminton Showdown', 'Acoustic Unplugged Jam']
+  },
 
   // ─── CLUSTER 3: MEDIA & PLAY ─────────────────────────────────
   {
@@ -297,6 +424,58 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     imageUrl: '/images/clubs/drsya.png',
     logoUrl: '/images/clubs/drsya-emblem.png',
     cardUrl: '/images/clubs/drsya-card.png',
+    photos: [
+      {
+        url: '/images/clubs/drsya/drsya-photo-1.jpg',
+        title: 'Core Cinematography Leads',
+        caption: 'Drsya club leads and student coordinators in official insignia jerseys ready for fest media production.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-2.jpg',
+        title: 'Organizing Committee & Mentors',
+        caption: 'Drsya filmmaking crew and workshop participants celebrating successful creative screening sessions.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-3.jpg',
+        title: 'Hands-On Camera & Lens Setup',
+        caption: 'Student cinematographers configuring focal length, aperture, and sensor exposure on Canon DSLR rigs.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-4.jpg',
+        title: 'Auditorium Interactive Workshop',
+        caption: 'Filmmaking enthusiasts discussing screenplays, creative direction, and cinematic storytelling.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-5.jpg',
+        title: 'Direction & Masterclass Keynote',
+        caption: 'Lead presenter breaking down scene composition, visual pacing, and camera movements.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-6.jpg',
+        title: 'Q&A & Creative Reel Review',
+        caption: 'Audience and participants interacting with judges and mentors on film editing techniques.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-7.jpg',
+        title: 'Short Film Screening & Trivia',
+        caption: 'Packed seminar hall enthusiastically participating in short film analysis and visual media quizzes.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-8.jpg',
+        title: 'Post-Production & Editing Suite',
+        caption: 'Student filmmakers reviewing rough cuts, transitions, color grading, and sound mixing.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-9.jpg',
+        title: 'Live Event Cinematography',
+        caption: 'Camera operator capturing crisp live stage performances and audience reactions during fest events.'
+      },
+      {
+        url: '/images/clubs/drsya/drsya-photo-10.jpg',
+        title: 'Grand Auditorium Premiere',
+        caption: 'Control console screening short film competition entries to a packed amphitheatre audience.'
+      },
+    ],
     caption: 'Filmmakers, cinematographers, and editors scripting, shooting, and premiering short films within 48 tight hours.',
     description: 'The visual storytelling powerhouse of Parinaam. Drsya challenges creative directors with 48-hour short film making sprints, campus photography marathons, and cinematic visual media challenges.',
     eventsConducted: ['Kala Drishti 48h Film Making', 'Campus Photo Walk Marathon', 'Cinematic Reel Craft']

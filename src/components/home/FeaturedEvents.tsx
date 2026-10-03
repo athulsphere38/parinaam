@@ -33,8 +33,12 @@ function mapApiEventToFestEvent(e: any): FestEvent {
     coordinators: Array.isArray(e.coordinators) ? e.coordinators : [],
     image: e.poster_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1000',
     rulebookUrl: e.rulebook_url || '',
+    unstopUrl: e.unstop_url || e.registration_url || '',
+    registrationUrl: e.registration_url || e.unstop_url || '',
     isPopular: Boolean(e.is_popular || e.is_featured),
     registrationOpen: Boolean(e.registration_open),
+    clubName: e.club_name || e.category || 'Parinaam',
+    clubColor: e.club_color || '#a855f7',
   };
 }
 
@@ -67,9 +71,10 @@ export const FeaturedEvents = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const sortedEvents = [...events].sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
   const filteredEvents = activeCategory === 'All'
-    ? events.slice(0, 6)
-    : events.filter((e) => e.category === activeCategory);
+    ? sortedEvents.slice(0, 6)
+    : sortedEvents.filter((e) => e.category === activeCategory);
 
   const handleQuickRegister = (event: FestEvent) => {
     router.push(user ? '/events' : `/auth/register?event=${event.id}`);

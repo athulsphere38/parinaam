@@ -43,6 +43,52 @@ export async function POST(req: NextRequest) {
       return error('Invalid email or password', 401);
     }
 
+    // Auto-sync payment status if outside student has paid
+    if (!user.is_amrita_student && !user.platform_fee_paid) {
+      try {
+        const paidCheck = await db.query(
+          `SELECT id FROM payments WHERE user_id = $1 AND status = 'paid' AND type = 'platform_fee'`,
+          [user.id]
+        );
+        if (paidCheck.rows.length > 0) {
+          await db.query(
+            `UPDATE users SET platform_fee_paid = TRUE, verification_status = 'verified', pass_type = 'DELEGATE_PASS_1000' WHERE id = $1`,
+            [user.id]
+          );
+          user.platform_fee_paid = true;
+          user.verification_status = 'verified';
+          user.pass_type = 'DELEGATE_PASS_1000';
+        } else {
+          const pendingPays = await db.query(
+            `SELECT id, cf_order_id FROM payments WHERE user_id = $1 AND type = 'platform_fee' AND cf_order_id IS NOT NULL`,
+            [user.id]
+          );
+          for (const p of pendingPays.rows) {
+            if (p.cf_order_id) {
+              const { verifyCashfreePayment } = await import('@/lib/cashfree');
+              const cfRes = await verifyCashfreePayment(p.cf_order_id);
+              if (cfRes.isPaid) {
+                await db.query(
+                  `UPDATE payments SET status = 'paid', cf_payment_id = $1, updated_at = NOW() WHERE id = $2`,
+                  [cfRes.payment?.cf_payment_id || `cfpay_${Date.now()}`, p.id]
+                );
+                await db.query(
+                  `UPDATE users SET platform_fee_paid = TRUE, verification_status = 'verified', pass_type = 'DELEGATE_PASS_1000' WHERE id = $1`,
+                  [user.id]
+                );
+                user.platform_fee_paid = true;
+                user.verification_status = 'verified';
+                user.pass_type = 'DELEGATE_PASS_1000';
+                break;
+              }
+            }
+          }
+        }
+      } catch (syncErr: any) {
+        console.warn('[Login sync notice]:', syncErr.message);
+      }
+    }
+
     // Sign JWT with role + clubId
     const token = await signToken({
       userId: user.id,

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import {
   Plus, Calendar, Users, QrCode, ArrowLeft,
   ChevronRight, Shield, CheckCircle, Clock,
-  Building2, Sparkles, Filter
+  Building2, Sparkles, Filter, Trash2, Loader2, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -33,6 +33,8 @@ interface EventItem {
   registration_open: boolean;
   is_popular: boolean;
   day_number: number;
+  unstop_url?: string;
+  registration_url?: string;
 }
 
 export default function ClubAdminPortal({
@@ -48,6 +50,27 @@ export default function ClubAdminPortal({
   const [allClubs, setAllClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteEvent = async (eventId: string, eventName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete '${eventName}'? This action cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(eventId);
+    try {
+      const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        setEvents(evs => evs.filter(e => e.id !== eventId));
+      } else {
+        alert(json.error || 'Failed to delete event');
+      }
+    } catch {
+      alert('Network error deleting event. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
   const [error, setError] = useState('');
 
   // Fetch club & events
@@ -67,8 +90,8 @@ export default function ClubAdminPortal({
           const found = d.data.clubs.find((c: Club) => c.slug.toLowerCase() === clubSlug.toLowerCase());
           if (found) {
             setClub(found);
-            // Fetch events for this club
-            return fetch(`/api/events?club_id=${found.id}`)
+            // Fetch all events for this club (including drafts and published)
+            return fetch(`/api/events?club_id=${found.id}&status=all&limit=100`)
               .then(r => r.json())
               .then(ed => {
                 if (ed.success) setEvents(ed.data.events);
@@ -298,6 +321,11 @@ export default function ClubAdminPortal({
                       }`}>
                         {event.status}
                       </span>
+                      {(event.unstop_url || event.registration_url) && (
+                        <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full font-semibold border border-blue-500/30 flex items-center gap-1">
+                          <ExternalLink size={10} /> Unstop Link
+                        </span>
+                      )}
                       {event.is_popular && (
                         <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
                           ⭐ Featured
@@ -316,7 +344,23 @@ export default function ClubAdminPortal({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {(event.unstop_url || event.registration_url) && (
+                      <a
+                        href={
+                          (event.unstop_url || event.registration_url || '').startsWith('http')
+                            ? (event.unstop_url || event.registration_url)
+                            : `https://${event.unstop_url || event.registration_url}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all"
+                        title="Open external Unstop registration page in new tab"
+                      >
+                        <span>Unstop Link</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
                     <Link
                       href={`/admin/${club.slug}/events/${event.id}/registrations`}
                       className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-200 hover:text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all"
@@ -329,6 +373,15 @@ export default function ClubAdminPortal({
                     >
                       Edit
                     </Link>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id, event.name)}
+                      disabled={deletingId === event.id}
+                      className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-medium px-3 py-2 rounded-xl transition-all disabled:opacity-50"
+                      title="Delete Event"
+                    >
+                      {deletingId === event.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                      <span className="hidden sm:inline">Delete</span>
+                    </button>
                   </div>
                 </div>
               ))}

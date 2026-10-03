@@ -82,7 +82,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       'start_time', 'end_time', 'day_number', 'min_team_size',
       'max_team_size', 'capacity', 'fee', 'prize_pool', 'eligibility',
       'rules', 'rounds', 'coordinators', 'poster_url', 'rulebook_url',
+      'unstop_url', 'registration_url',
       'status', 'registration_open', 'is_popular', 'is_featured',
+      'amrita_fee', 'other_fee',
     ];
 
     const updates: string[] = [];
@@ -138,7 +140,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-// DELETE /api/events/[id] — soft delete (cancel)
+// DELETE /api/events/[id] — permanently delete event
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -146,16 +148,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!session) return unauthorized();
     if (session.role === 'student') return forbidden();
 
-    const eventResult = await db.query('SELECT club_id FROM events WHERE id = $1', [id]);
+    const eventResult = await db.query('SELECT club_id, name FROM events WHERE id = $1', [id]);
     if (eventResult.rows.length === 0) return notFound('Event not found');
 
     if (session.role === 'club_admin' && session.clubId !== eventResult.rows[0].club_id) {
       return forbidden('You can only delete events in your club');
     }
 
-    await db.query(`UPDATE events SET status = 'cancelled' WHERE id = $1`, [id]);
+    // Clean up dependent attendance and registrations
+    await db.query('DELETE FROM attendance WHERE event_id = $1', [id]);
+    await db.query('DELETE FROM registrations WHERE event_id = $1', [id]);
+    await db.query('DELETE FROM events WHERE id = $1', [id]);
 
-    return success({ message: 'Event cancelled successfully' });
+    return success({ message: `Event '${eventResult.rows[0].name}' deleted successfully` });
   } catch (err) {
     console.error('Delete event error:', err);
     return serverError();

@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FestEvent } from '../../types';
-import { X, Calendar, Clock, MapPin, Users, Trophy, Download, Phone, Mail, CheckCircle2, ShieldCheck, Ticket } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Users, Trophy, Download, Phone, Mail, CheckCircle2, ShieldCheck, Ticket, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { useFest } from '../../context/FestContext';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { isStudentProfileComplete } from '@/lib/institutionPolicy';
+import { EventRegistrationModal } from './EventRegistrationModal';
 
 interface EventDetailModalProps {
   event: FestEvent | null;
@@ -21,7 +22,25 @@ interface EventDetailModalProps {
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose }) => {
   const { user } = useAuth();
   const router = useRouter();
-  const { isInCart, isConfirmed, toggleCartItem } = useCart();
+  const { isInCart, isConfirmed } = useCart();
+
+  const [regModalOpen, setRegModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (event) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = orig;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [event, onClose]);
+
   if (!event) return null;
 
   const registered = isConfirmed(event.id);
@@ -29,8 +48,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
   const isAdmin = user?.role === 'club_admin' || user?.role === 'super_admin';
   const isStudent = user?.role === 'student';
   const isProfileComplete = isStudentProfileComplete(user);
+  const hasUnstop = Boolean(event.unstopUrl || event.registrationUrl);
+  const unstopLink = (event.unstopUrl || event.registrationUrl || '').startsWith('http')
+    ? (event.unstopUrl || event.registrationUrl)
+    : `https://${event.unstopUrl || event.registrationUrl}`;
 
-  const handleInterestedClick = () => {
+  const handleRegisterClick = () => {
     if (!user) {
       onClose();
       router.push('/auth/login?redirect=/events');
@@ -43,13 +66,19 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
       return;
     }
     if (isStudent) {
-      toggleCartItem(event.id);
+      setRegModalOpen(true);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative my-8 text-slate-200 animate-in fade-in zoom-in-95 duration-200">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border border-purple-900/50 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative my-auto text-slate-200 animate-in fade-in zoom-in-95 duration-200 overscroll-contain"
+      >
         
         {/* Close Button */}
         <button
@@ -196,7 +225,17 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
             <span>Download Official Rulebook (PDF)</span>
           </button>
 
-          {!isAdmin ? (
+          {hasUnstop ? (
+            <a
+              href={unstopLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-8 py-3 rounded-xl text-white text-sm font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 shadow-fest-brand flex items-center justify-center gap-2 transition-all"
+            >
+              <span>Register on Unstop</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          ) : !isAdmin ? (
             registered ? (
               <div className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-bold font-mono flex items-center justify-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
@@ -204,10 +243,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
               </div>
             ) : (
               <button
-                onClick={handleInterestedClick}
+                onClick={handleRegisterClick}
                 className={`w-full sm:w-auto px-8 py-3 rounded-xl text-white text-sm font-bold shadow-fest-brand flex items-center justify-center gap-2 transition-all ${
                   inCart && isStudent
-                    ? 'bg-pink-600 hover:bg-pink-500 border border-pink-500'
+                    ? 'bg-purple-600 hover:bg-purple-500 border border-purple-500'
                     : 'bg-primary hover:bg-primary-hover'
                 }`}
               >
@@ -218,8 +257,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
                     : !isProfileComplete
                       ? "Complete Profile to Register"
                       : inCart
-                        ? "✓ Interested"
-                        : "I'm Interested"}
+                        ? "✓ In Cart"
+                        : "Register for Event"}
                 </span>
               </button>
             )
@@ -228,6 +267,26 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
           )}
         </div>
 
+        {/* Team / Individual Registration Modal */}
+        <EventRegistrationModal
+          event={{
+            id: event.id,
+            name: event.name,
+            club_name: event.clubName || (event as any).club_name || (event as any).organizer || 'Chakravyuha Club',
+            event_code: event.eventCode,
+            category: event.category,
+            poster_url: event.image,
+            fee: event.fee,
+            amrita_fee: (event as any).amrita_fee ?? (event.minTeamSize && event.minTeamSize > 1 ? 150 : event.fee),
+            other_fee: (event as any).other_fee ?? (event.minTeamSize && event.minTeamSize > 1 ? 300 : event.fee),
+            min_team_size: event.minTeamSize || 1,
+            max_team_size: event.maxTeamSize || 1,
+            registration_open: true,
+            status: 'published',
+          }}
+          isOpen={regModalOpen}
+          onClose={() => setRegModalOpen(false)}
+        />
       </div>
     </div>
   );

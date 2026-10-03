@@ -16,7 +16,7 @@
 9. [Step 8: Build and Run Application with PM2](#step-8-build-and-run-application-with-pm2)
 10. [Step 9: Configure Nginx Reverse Proxy](#step-9-configure-nginx-reverse-proxy)
 11. [Step 10: Install Let's Encrypt SSL Certificate](#step-10-install-lets-encrypt-ssl-certificate)
-12. [Step 11: Configure Razorpay Production Webhooks](#step-11-configure-razorpay-production-webhooks)
+12. [Step 11: Configure Cashfree Production Webhooks](#step-11-configure-cashfree-production-webhooks)
 13. [Step 12: Zero-Downtime Deployment Script & Maintenance](#step-12-zero-downtime-deployment-script--maintenance)
 14. [Troubleshooting & Verification Checklist](#troubleshooting--verification-checklist)
 
@@ -244,9 +244,12 @@ DATABASE_URL=postgresql://postgres:YOUR_RDS_PASSWORD@YOUR_RDS_ENDPOINT:5432/pari
 # ─── JWT Security (Generate a strong 64-char key) ───────────
 JWT_SECRET=c98a3f81e7d238b761a29f8c4e0b12d589a74e621b03c58d74e92a104f6b839e
 
-# ─── Razorpay Payment Gateway ───────────────────────────────
-RAZORPAY_KEY_ID=rzp_live_YOUR_PRODUCTION_KEY_ID
-RAZORPAY_KEY_SECRET=YOUR_PRODUCTION_KEY_SECRET
+# ─── Cashfree Payment Gateway (LIVE / Production) ───────────
+CASHFREE_APP_ID=1454372309defa4f81be166e22e2734541
+CASHFREE_SECRET_KEY=YOUR_CASHFREE_SECRET_KEY
+NEXT_PUBLIC_CASHFREE_APP_ID=1454372309defa4f81be166e22e2734541
+CASHFREE_MODE=production
+NEXT_PUBLIC_CASHFREE_MODE=production
 
 # ─── AWS S3 (ID Card Proofs & Banners) ──────────────────────
 AWS_REGION=ap-south-1
@@ -483,18 +486,18 @@ sudo certbot renew --dry-run
 
 ---
 
-## Step 11: Configure Razorpay Production Webhooks
+## Step 11: Configure Cashfree Production Webhooks
 
-1. Log into your [Razorpay Dashboard](https://dashboard.razorpay.com/).
-2. Switch from **Test Mode** to **Live Mode**.
-3. Go to **Settings** → **Webhooks** → Click **Add New Webhook**.
-4. **Webhook URL:** `https://parinaam.online/api/payments/verify`
-5. **Secret:** Same string as in your `.env.production` file.
+1. Log into your [Cashfree Merchant Dashboard](https://merchant.cashfree.com/merchants/login).
+2. Ensure you are on the **Production / Live** environment.
+3. Go to **Payment Gateway** → **Developers** → **Webhooks** → Click **Add Webhook Endpoint**.
+4. **Endpoint URL:** `https://parinaam.online/api/payments/verify`
+5. **API Version:** `2023-08-01`
 6. **Active Events:**
-   - `payment.captured`
-   - `payment.failed`
-   - `order.paid`
-7. Click **Save Webhook**.
+   - `PAYMENT_SUCCESS_WEBHOOK`
+   - `PAYMENT_FAILED_WEBHOOK`
+   - `ORDER_PAID`
+7. Click **Test & Save Endpoint**.
 
 ---
 

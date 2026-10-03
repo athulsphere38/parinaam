@@ -162,7 +162,17 @@ export default function EventRegistrationsPage() {
 													<span className="flex items-center gap-1 text-slate-600 text-xs"><Clock size={12} /> Pending</span>
 												)}
 											</td>
-											<td className="px-4 py-3 text-slate-500 text-xs">{new Date(participant.registered_at).toLocaleDateString()}</td>
+											<td className="px-4 py-3 text-slate-400 font-mono text-xs">
+												{participant.registered_at ? new Date(participant.registered_at).toLocaleString('en-IN', {
+													day: '2-digit',
+													month: 'short',
+													year: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit',
+													hour12: true,
+													timeZone: 'Asia/Kolkata',
+												}) : '—'}
+											</td>
 										</motion.tr>
 									))
 								)}

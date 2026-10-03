@@ -97,6 +97,7 @@ export default function SponsorRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionId, setSubmissionId] = useState('');
+  const [submittedStatus, setSubmittedStatus] = useState<string>('PENDING');
 
   const selectedPackage =
     SPONSOR_PACKAGES.find((pkg) => pkg.id === formData.tier) || SPONSOR_PACKAGES[1];
@@ -114,7 +115,7 @@ export default function SponsorRegistrationPage() {
 
   const [formError, setFormError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
@@ -123,19 +124,41 @@ export default function SponsorRegistrationPage() {
       return;
     }
 
+    if (!formData.companyName.trim() || !formData.contactPerson.trim() || !formData.phone.trim()) {
+      setFormError('Please fill in all required contact & organization fields.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const generatedId = `PAR-SPON-${Math.floor(100000 + Math.random() * 900000)}`;
-      setSubmissionId(generatedId);
+    try {
+      const res = await fetch('/api/sponsors/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        setSubmissionId(data.data.application_id || '');
+        setSubmittedStatus(data.data.status || 'PENDING');
+        setIsSubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setFormError(data.error || 'Failed to submit sponsor application. Please try again.');
+      }
+    } catch (err) {
+      console.error('Sponsor form submit error:', err);
+      setFormError('A network error occurred. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 600);
+    }
   };
 
   const resetForm = () => {
     setIsSubmitted(false);
+    setSubmittedStatus('PENDING');
     setFormData({
       companyName: '',
       contactPerson: '',
@@ -150,12 +173,12 @@ export default function SponsorRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05030a] text-slate-100 fest-grid-bg pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#05030a] text-slate-100 fest-grid-bg pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden w-full max-w-full font-sans">
 
       {/* Ambient Theme Glows */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-purple-600/15 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-1/2 right-10 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-20 left-10 w-[400px] h-[400px] bg-purple-900/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 sm:w-96 lg:w-[700px] h-64 sm:h-96 lg:h-[450px] bg-purple-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 right-10 w-64 sm:w-96 lg:w-[500px] h-64 sm:h-96 lg:h-[500px] bg-fuchsia-600/10 rounded-full blur-[100px] sm:blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-20 left-10 w-48 sm:w-80 lg:w-[400px] h-48 sm:h-80 lg:h-[400px] bg-purple-900/15 rounded-full blur-[90px] sm:blur-[140px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-12 relative z-10">
 
@@ -166,7 +189,7 @@ export default function SponsorRegistrationPage() {
             <span className="uppercase tracking-widest font-bold">THE PACKAGES</span>
           </div>
           
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-wide text-white font-['Pixelify_Sans',_monospace]">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-sans">
             Choose Your{' '}
             <span className="bg-gradient-to-r from-fuchsia-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
               Level of Partnership
@@ -180,25 +203,43 @@ export default function SponsorRegistrationPage() {
 
         {/* Success View */}
         {isSubmitted ? (
-          <div className="bg-[#0c091d]/90 border border-emerald-500/40 rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-[0_0_50px_rgba(16,185,129,0.2)] backdrop-blur-md">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+          <div className="bg-[#0c091d]/90 border border-purple-500/40 rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-[0_0_50px_rgba(168,85,247,0.2)] backdrop-blur-md">
+            <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/40 text-fuchsia-400 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 size={36} />
             </div>
             
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white font-['Pixelify_Sans',_monospace]">
-                Sponsorship Registration Received!
+              <h2 className="text-2xl sm:text-3xl font-bold text-white font-sans tracking-tight">
+                {submittedStatus === 'CONFIRMED'
+                  ? 'Sponsorship Application Confirmed!'
+                  : submittedStatus === 'REJECTED'
+                  ? 'Sponsorship Application Reviewed'
+                  : 'Sponsorship Application Submitted'}
               </h2>
               <p className="text-sm text-slate-300">
                 Thank you, <span className="font-semibold text-white">{formData.contactPerson || 'Partner'}</span>. 
-                Your registration for <span className="font-semibold text-fuchsia-300">{formData.companyName}</span> has been logged into the festival desk.
+                {submittedStatus === 'CONFIRMED'
+                  ? ` Your sponsorship for ${formData.companyName} has been officially confirmed by Super Admin.`
+                  : ` Your sponsorship application for ${formData.companyName} has been successfully submitted and is now pending review by the Parinaam Super Admin team.`}
               </p>
             </div>
 
             <div className="bg-black/60 border border-purple-900/50 rounded-xl p-4 text-left font-mono text-xs space-y-2.5 text-slate-300">
               <div className="flex justify-between border-b border-purple-900/40 pb-2">
                 <span className="text-slate-500">REFERENCE ID:</span>
-                <span className="text-emerald-400 font-bold">{submissionId}</span>
+                <span className="text-fuchsia-400 font-bold">{submissionId}</span>
+              </div>
+              <div className="flex justify-between border-b border-purple-900/40 pb-2">
+                <span className="text-slate-500">APPLICATION STATUS:</span>
+                <span className={`font-bold px-2 py-0.5 rounded uppercase border text-[11px] ${
+                  submittedStatus === 'CONFIRMED'
+                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                    : submittedStatus === 'REJECTED'
+                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                    : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                }`}>
+                  {submittedStatus === 'CONFIRMED' ? 'CONFIRMED' : submittedStatus === 'REJECTED' ? 'REJECTED' : 'PENDING REVIEW'}
+                </span>
               </div>
               <div className="flex justify-between border-b border-purple-900/40 pb-2">
                 <span className="text-slate-500">CHOSEN PACKAGE:</span>
@@ -239,17 +280,17 @@ export default function SponsorRegistrationPage() {
             <div className="p-4 bg-purple-950/50 border border-purple-500/30 rounded-xl text-xs text-purple-200 text-left flex items-start gap-3">
               <Clock size={16} className="text-fuchsia-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-white mb-0.5">MoU &amp; Corporate Desk Notice</p>
-                Our Head of Corporate Relations will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, tax invoice guidelines, and MoU agreement.
+                <p className="font-semibold text-white mb-0.5">Super Admin Review &amp; MoU Notice</p>
+                Our Corporate Relations &amp; Super Admin team will review your application within <strong>24 business hours</strong> and contact you regarding proposal deck verification, tax invoice guidelines, and formal MoU agreement.
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <button
                 onClick={resetForm}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-purple-500/30 text-sm font-medium hover:bg-purple-950/40 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-purple-500/30 text-sm font-medium hover:bg-purple-950/40 transition-colors cursor-pointer text-slate-200"
               >
-                Register Another Package
+                Submit Another Application
               </button>
               <Link
                 href="/"
@@ -293,7 +334,7 @@ export default function SponsorRegistrationPage() {
 
                     {/* Tier Name & Amount */}
                     <div className="space-y-1 mb-5 border-b border-purple-900/40 pb-4">
-                      <h3 className="text-xl font-bold text-white tracking-wide font-['Pixelify_Sans',_monospace]">
+                      <h3 className="text-xl font-bold text-white tracking-wide font-sans">
                         {pkg.tierName}
                       </h3>
                       <p className={`text-2xl sm:text-3xl font-extrabold font-mono ${pkg.priceColor}`}>
@@ -352,7 +393,7 @@ export default function SponsorRegistrationPage() {
                     <Sparkles size={12} className="text-amber-400" />
                     <span className="uppercase tracking-widest font-bold">FESTIVAL AT A GLANCE</span>
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-white font-['Pixelify_Sans',_monospace]">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white font-sans tracking-tight">
                     Sponsorship Brochure &amp; Highlights
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400">
@@ -393,7 +434,7 @@ export default function SponsorRegistrationPage() {
                   <span className="text-xs font-mono text-fuchsia-400 font-bold tracking-wider uppercase block">
                     SPONSOR REGISTRATION FORM
                   </span>
-                  <h3 className="text-2xl font-bold text-white mt-1 font-['Pixelify_Sans',_monospace]">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 font-sans tracking-tight">
                     Register Your Company as a Sponsor
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
@@ -588,7 +629,7 @@ export default function SponsorRegistrationPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-900/40 pb-3">
                       <div className="flex items-center gap-2">
                         <CreditCard size={18} className="text-fuchsia-400" />
-                        <span className="text-sm font-bold text-white tracking-wide font-['Pixelify_Sans',_monospace]">
+                        <span className="text-sm font-bold text-white tracking-wide font-sans">
                           Payment Section
                         </span>
                       </div>
@@ -622,7 +663,7 @@ export default function SponsorRegistrationPage() {
                         </span>
                         <div className="flex items-center gap-2 text-[10px] font-mono text-slate-300">
                           <span className="px-2 py-0.5 bg-purple-950/60 border border-purple-900/50 rounded">UPI</span>
-                          <span className="px-2 py-0.5 bg-purple-950/60 border border-purple-900/50 rounded">Razorpay</span>
+                          <span className="px-2 py-0.5 bg-purple-950/60 border border-purple-900/50 rounded">Cashfree</span>
                           <span className="px-2 py-0.5 bg-purple-950/60 border border-purple-900/50 rounded">NEFT / RTGS</span>
                         </div>
                       </div>
@@ -657,28 +698,28 @@ export default function SponsorRegistrationPage() {
                 </form>
               </div>
 
-              {/* Corporate Desk Contacts (4 cols) */}
+              {/* Help Desk Contacts (4 cols) */}
               <div className="lg:col-span-4 space-y-6">
                 
                 {/* Official Contact Card */}
                 <div className="bg-[#0c091d]/90 border border-purple-900/50 rounded-2xl p-6 backdrop-blur-md space-y-5 shadow-xl">
-                  <div className="flex items-center gap-2 text-fuchsia-400 font-mono text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-fuchsia-400 font-sans text-xs font-bold tracking-wider uppercase">
                     <Phone size={15} />
-                    <span>CORPORATE DESK CONTACTS</span>
+                    <span>HELP DESK CONTACTS</span>
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                    Need custom branding, booth dimensions, or invoice inquiries? Contact our team directly:
+                  <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                    Need custom branding, booth dimensions, or assistance? Contact our team directly:
                   </p>
 
-                  <div className="space-y-3 font-mono text-xs">
+                  <div className="space-y-3 font-sans text-xs">
                     <div className="bg-black/60 border border-purple-900/40 rounded-xl p-3.5 space-y-2">
-                      <span className="text-[10px] text-fuchsia-300 uppercase block font-semibold">
-                        OFFICIAL SPONSORSHIP DESK
+                      <span className="text-[11px] text-fuchsia-300 uppercase block font-semibold tracking-wide">
+                        OFFICIAL HELP DESK
                       </span>
-                      <p className="text-slate-300 flex items-center gap-2">
+                      <p className="text-slate-200 flex items-center gap-2">
                         <Mail size={13} className="text-fuchsia-400" />
-                        <a href="mailto:parinaam@av.amrita.edu" className="hover:text-fuchsia-400 transition-colors">
+                        <a href="mailto:parinaam@av.amrita.edu" className="hover:text-fuchsia-400 transition-colors font-medium">
                           parinaam@av.amrita.edu
                         </a>
                       </p>
@@ -689,17 +730,17 @@ export default function SponsorRegistrationPage() {
                     </div>
 
                     <div className="bg-black/60 border border-purple-900/40 rounded-xl p-3.5 space-y-1 text-slate-300">
-                      <span className="text-[10px] text-amber-400 uppercase block font-semibold">
+                      <span className="text-[11px] text-amber-400 uppercase block font-semibold tracking-wide">
                         PROPOSAL &amp; MOU DESK
                       </span>
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                        Our corporate relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, invoice guidelines, and MoU agreement.
+                      <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                        Our festival relations committee will contact you within <strong>24 business hours</strong> with the formal festival proposal deck, invoice guidelines, and MoU agreement.
                       </p>
                     </div>
                   </div>
 
                   {/* Campus Address */}
-                  <div className="pt-2 border-t border-purple-900/40 text-xs text-slate-400 space-y-1">
+                  <div className="pt-2 border-t border-purple-900/40 text-xs text-slate-300 space-y-1">
                     <p className="flex items-start gap-2">
                       <MapPin size={14} className="text-fuchsia-400 shrink-0 mt-0.5" />
                       <span className="font-sans">
@@ -716,10 +757,10 @@ export default function SponsorRegistrationPage() {
                   <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto text-fuchsia-300">
                     <Download size={20} />
                   </div>
-                  <h4 className="text-sm font-bold text-white font-['Pixelify_Sans',_monospace]">
+                  <h4 className="text-sm font-bold text-white font-sans">
                     Download Partnership Deck
                   </h4>
-                  <p className="text-xs text-slate-400 font-sans">
+                  <p className="text-xs text-slate-300 font-sans">
                     Official Parinaam 2026 PDF brochure containing full campus event maps &amp; past sponsors.
                   </p>
                   <a

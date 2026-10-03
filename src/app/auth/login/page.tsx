@@ -23,7 +23,13 @@ export default function LoginPage() {
     if (user) {
       if (user.role === 'super_admin') router.push('/superadmin');
       else if (user.role === 'club_admin') router.push(user.club_slug ? `/admin/${user.club_slug}` : '/admin');
-      else router.push('/dashboard');
+      else {
+        if (!user.is_amrita_student && !user.platform_fee_paid) {
+          router.push('/auth/register');
+        } else {
+          router.push('/dashboard');
+        }
+      }
     }
   }, [user, router]);
 
@@ -52,10 +58,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden w-full max-w-full">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 lg:w-[600px] h-64 sm:h-96 lg:h-[600px] bg-purple-600/10 rounded-full blur-[90px] sm:blur-[120px]" />
       </div>
 
       <motion.div
@@ -65,7 +71,7 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10"
       >
         {/* Card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm shadow-2xl">
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">

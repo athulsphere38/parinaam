@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { CreditCard, CheckCircle, Loader2, IndianRupee, Shield } from 'lucide-react';
 import { useRequireAuth } from '@/context/AuthContext';
 import { useAuth } from '@/context/AuthContext';
+import { launchCashfreeCheckout } from '@/lib/cashfreeCheckout';
 
 function PaymentContent() {
   const { user } = useRequireAuth();
@@ -37,10 +38,10 @@ function PaymentContent() {
         body: JSON.stringify({ type: 'platform_fee' }),
       }).then(r => r.json()).then(d => {
         if (d.success) {
-          if (d.data.is_free) {
+          if (d.data?.is_free || d.data?.amount === 0) {
             router.push('/dashboard/pass');
           } else {
-            setInfo({ amount: d.data.amount / 100, description: d.data.description });
+            setInfo({ amount: (d.data?.amount || 100000) / 100, description: 'Parinaam 2026 Festival Delegate Pass' });
           }
         } else if (d.error?.includes('already paid')) {
           router.push('/dashboard/pass');
@@ -56,43 +57,72 @@ function PaymentContent() {
 
   const handlePay = async () => {
     if (!info) return;
-    setPaying(true); setError('');
+    setPaying(true);
+    setError('');
 
     try {
-      // 1. Create order
+      // 1. Create order server-side via POST /api/payments/create-order
       const ordRes = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
           registration_id: registrationId || undefined,
-          event_id: eventId || undefined,
+          event_ids: eventId ? [eventId] : undefined,
         }),
       });
       const ordData = await ordRes.json();
-      if (!ordData.success) throw new Error(ordData.error || 'Failed to create order');
+      if (!ordData.success) throw new Error(ordData.error || 'Failed to create payment order.');
 
-      // 2. In mock mode (or test mode), auto-verify
-      const verRes = await fetch('/api/payments/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razorpay_order_id: ordData.data.order_id,
-          razorpay_payment_id: `pay_mock_${Date.now()}`,
-          razorpay_signature: 'mock_signature_valid',
-        }),
-      });
-      const verData = await verRes.json();
-      if (!verData.success) throw new Error(verData.error || 'Payment verification failed');
+      const orderPayload = ordData.data || ordData;
 
-      setDone(true);
-      await refreshUser();
-      setTimeout(() => {
-        router.push(type === 'platform_fee' ? '/pass' : '/dashboard');
-      }, 2000);
+      if (orderPayload.is_free || orderPayload.amount === 0) {
+        setDone(true);
+        await refreshUser();
+        setTimeout(() => {
+          router.push(type === 'platform_fee' ? '/pass' : '/dashboard');
+        }, 1500);
+        return;
+      }
+
+      // 2. Open Cashfree Checkout modal
+      if (orderPayload.payment_session_id) {
+        await launchCashfreeCheckout({
+          paymentSessionId: orderPayload.payment_session_id,
+          orderId: orderPayload.order_id,
+          paymentDbId: orderPayload.payment_db_id,
+          onSuccess: async () => {
+            // Verify on server
+            try {
+              await fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  payment_db_id: orderPayload.payment_db_id,
+                  order_id: orderPayload.order_id,
+                  type,
+                }),
+              });
+            } catch {}
+            setDone(true);
+            await refreshUser();
+            setTimeout(() => {
+              router.push(type === 'platform_fee' ? '/pass' : '/dashboard');
+            }, 1500);
+          },
+          onFailure: (errMsg: string) => {
+            setPaying(false);
+            setError(errMsg);
+          },
+          onDismiss: () => {
+            setPaying(false);
+          },
+        });
+      } else {
+        throw new Error('No active Cashfree payment session returned from server.');
+      }
     } catch (e: any) {
-      setError(e.message || 'Payment failed');
-    } finally {
+      setError(e.message || 'Payment initiation failed.');
       setPaying(false);
     }
   };
@@ -157,12 +187,6 @@ function PaymentContent() {
             </div>
           )}
 
-          {/* Mock notice */}
-          <div className="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-amber-400/80 text-xs flex items-start gap-2">
-            <Shield size={13} className="shrink-0 mt-0.5" />
-            <span>Running in <strong>test mode</strong>. Real Razorpay payment gateway will be used in production. No actual charge will be made.</span>
-          </div>
-
           <button onClick={handlePay} disabled={paying || !info}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-900/30">
             {paying ? (
@@ -172,8 +196,9 @@ function PaymentContent() {
             )}
           </button>
 
-          <p className="text-slate-600 text-xs text-center mt-3">
-            Secured by Razorpay · 256-bit SSL encryption
+          <p className="text-slate-500 text-xs text-center mt-3 flex items-center justify-center gap-1.5">
+            <Shield size={12} className="text-emerald-400" />
+            <span>Secured by Cashfree Payment Gateway · 256-bit SSL encryption</span>
           </p>
         </div>
       </motion.div>

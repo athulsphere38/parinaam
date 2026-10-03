@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Info, MapPin, Users, IndianRupee, Trophy, FileText,
   Plus, Trash2, Save, Eye, AlertCircle, Clock,
-  CheckCircle, Layers, ArrowLeft
+  CheckCircle, Layers, ArrowLeft, ExternalLink, Globe
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { EventImageUploader } from '@/components/admin/EventImageUploader';
@@ -23,7 +23,7 @@ const SECTIONS = [
   { id: 'basic', label: 'Basic Info', icon: <Info size={15} /> },
   { id: 'schedule', label: 'Schedule', icon: <Clock size={15} /> },
   { id: 'team', label: 'Team & Capacity', icon: <Users size={15} /> },
-  { id: 'fees', label: 'Fees & Prizes', icon: <IndianRupee size={15} /> },
+  { id: 'fees', label: 'Fees & Registration', icon: <IndianRupee size={15} /> },
   { id: 'rounds', label: 'Rounds', icon: <Layers size={15} /> },
   { id: 'rules', label: 'Rules & Eligibility', icon: <FileText size={15} /> },
   { id: 'coordinators', label: 'Coordinators', icon: <Users size={15} /> },
@@ -53,7 +53,13 @@ export default function CreateClubEventPage({
     category: '', tags: [] as string[], tagInput: '',
     venue: '', date_start: '', date_end: '', start_time: '', end_time: '',
     day_number: '1',
+    participation_type: 'individual' as 'individual' | 'team',
     min_team_size: '1', max_team_size: '1',
+    team_pricing_structure: '',
+    amrita_fee: '',
+    other_fee: '',
+    registration_mode: 'internal' as 'internal' | 'unstop',
+    unstop_url: '',
     capacity: '', fee: '0', prize_pool: '',
     eligibility: '',
     rules: [''] as string[],
@@ -150,6 +156,28 @@ export default function CreateClubEventPage({
       }
     }
 
+    // Validate Unstop / External Registration URL if mode is 'unstop'
+    let effectiveUnstopUrl = form.unstop_url?.trim() || '';
+    if (form.registration_mode === 'unstop') {
+      if (!effectiveUnstopUrl) {
+        setError('Please provide an Unstop or external registration URL');
+        setActiveSection('fees');
+        return;
+      }
+      if (!effectiveUnstopUrl.startsWith('http://') && !effectiveUnstopUrl.startsWith('https://')) {
+        effectiveUnstopUrl = `https://${effectiveUnstopUrl}`;
+      }
+      try {
+        new URL(effectiveUnstopUrl);
+      } catch {
+        setError('Invalid Unstop or external URL format (must be a valid web link)');
+        setActiveSection('fees');
+        return;
+      }
+    } else {
+      effectiveUnstopUrl = '';
+    }
+
     if (publish && !form.date_start.trim()) {
       setError('Event start date is required to publish an event');
       setActiveSection('schedule');
@@ -163,9 +191,20 @@ export default function CreateClubEventPage({
     setError('');
     setSaving(true);
 
+    let effectiveEligibility = form.eligibility || '';
+    if (form.participation_type === 'team' && form.team_pricing_structure?.trim()) {
+      if (!effectiveEligibility.includes(form.team_pricing_structure.trim())) {
+        effectiveEligibility = effectiveEligibility
+          ? `${effectiveEligibility}\n\nTeam Pricing Structure: ${form.team_pricing_structure.trim()}`
+          : `Team Pricing Structure: ${form.team_pricing_structure.trim()}`;
+      }
+    }
+
     const payload = {
       ...form,
       poster_url: effectivePoster,
+      unstop_url: effectiveUnstopUrl || null,
+      registration_url: effectiveUnstopUrl || null,
       date_start: form.date_start.trim() || null,
       date_end: form.date_end.trim() || null,
       start_time: form.start_time.trim() || null,
@@ -175,6 +214,7 @@ export default function CreateClubEventPage({
       fee: parseInt(form.fee) || 0,
       min_team_size: parseInt(form.min_team_size) || 1,
       max_team_size: parseInt(form.max_team_size) || 1,
+      eligibility: effectiveEligibility,
       capacity: form.capacity ? parseInt(form.capacity) : null,
       day_number: parseInt(form.day_number) || 1,
       rules: form.rules.filter(r => r.trim()),
@@ -182,6 +222,8 @@ export default function CreateClubEventPage({
       rounds: form.rounds.filter(r => r.name.trim()),
       coordinators: form.coordinators.filter(c => c.name.trim()),
       club_id: club.id,
+      amrita_fee: form.participation_type === 'team' && form.amrita_fee !== '' ? parseInt(form.amrita_fee) : null,
+      other_fee: form.participation_type === 'team' && form.other_fee !== '' ? parseInt(form.other_fee) : null,
     };
 
     const res = await fetch('/api/events', {
@@ -220,16 +262,9 @@ export default function CreateClubEventPage({
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => handleSave(false)}
-              disabled={saving}
-              className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
-            >
-              <Save size={14} /> Save Draft
-            </button>
-            <button
               onClick={() => handleSave(true)}
               disabled={saving}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg disabled:opacity-50"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg disabled:opacity-50"
             >
               <Eye size={14} /> Publish Event
             </button>
@@ -399,27 +434,119 @@ export default function CreateClubEventPage({
                 {/* Team & Capacity */}
                 {activeSection === 'team' && (
                   <>
-                    <h2 className="text-lg font-bold text-white">Team Size & Capacity</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField label="Min Team Size">
-                        <input
-                          type="number"
-                          min="1"
-                          value={form.min_team_size}
-                          onChange={e => set('min_team_size', e.target.value)}
-                          className={inp}
-                        />
-                      </FormField>
-                      <FormField label="Max Team Size">
-                        <input
-                          type="number"
-                          min="1"
-                          value={form.max_team_size}
-                          onChange={e => set('max_team_size', e.target.value)}
-                          className={inp}
-                        />
-                      </FormField>
+                    <h2 className="text-lg font-bold text-white">Participation Type & Team Structure</h2>
+                    
+                    {/* Mode selector */}
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                      <div
+                        onClick={() => {
+                          set('participation_type', 'individual');
+                          set('min_team_size', '1');
+                          set('max_team_size', '1');
+                        }}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                          form.participation_type === 'individual'
+                            ? 'bg-purple-950/50 border-purple-500 ring-2 ring-purple-500/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <p className="text-white font-bold text-sm">👤 Individual / Solo</p>
+                        <p className="text-slate-400 text-xs mt-1">Single participant entry per pass</p>
+                      </div>
+
+                      <div
+                        onClick={() => {
+                          set('participation_type', 'team');
+                          if (form.min_team_size === '1' && form.max_team_size === '1') {
+                            set('min_team_size', '2');
+                            set('max_team_size', '4');
+                          }
+                        }}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                          form.participation_type === 'team'
+                            ? 'bg-purple-950/50 border-purple-500 ring-2 ring-purple-500/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <p className="text-white font-bold text-sm">👥 Team Participation</p>
+                        <p className="text-slate-400 text-xs mt-1">Multi-member squads with custom sizes/pricing</p>
+                      </div>
                     </div>
+
+                    {form.participation_type === 'team' && (
+                      <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField label="Min Team Members">
+                            <input
+                              type="number"
+                              min="2"
+                              value={form.min_team_size}
+                              onChange={e => set('min_team_size', e.target.value)}
+                              className={inp}
+                            />
+                          </FormField>
+                          <FormField label="Max Team Members">
+                            <input
+                              type="number"
+                              min="2"
+                              value={form.max_team_size}
+                              onChange={e => set('max_team_size', e.target.value)}
+                              className={inp}
+                            />
+                          </FormField>
+                        </div>
+
+                        {/* Per-college fee tiers for team events */}
+                        <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                          <p className="text-xs font-semibold text-purple-300">📋 College-based Fee Tiers (Recommended for Chakravyuha-style events)</p>
+                          <p className="text-slate-400 text-[11px] leading-relaxed">
+                            Set separate fees for Amrita students and external college students.
+                            If filled, these override the general fee for this team event.
+                          </p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField label="🏛️ Amrita Students Fee (₹)">
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₹</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={form.amrita_fee}
+                                  onChange={e => set('amrita_fee', e.target.value)}
+                                  placeholder="e.g. 150"
+                                  className={`${inp} pl-7`}
+                                />
+                              </div>
+                            </FormField>
+                            <FormField label="🎓 Other College Students Fee (₹)">
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₹</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={form.other_fee}
+                                  onChange={e => set('other_fee', e.target.value)}
+                                  placeholder="e.g. 300"
+                                  className={`${inp} pl-7`}
+                                />
+                              </div>
+                            </FormField>
+                          </div>
+                        </div>
+
+                        <FormField label="Team Pricing Breakdown / Tiers">
+                          <input
+                            value={form.team_pricing_structure}
+                            onChange={e => set('team_pricing_structure', e.target.value)}
+                            placeholder="e.g. ₹350 for team of 4, ₹200 for team of 2"
+                            className={inp}
+                          />
+                          <p className="text-slate-400 text-[11px] mt-1">
+                            Specify any custom pricing tiers per team size (will be highlighted on the event card).
+                          </p>
+                        </FormField>
+                      </div>
+                    )}
+
                     <FormField label="Max Attendee / Team Capacity">
                       <input
                         type="number"
@@ -433,10 +560,85 @@ export default function CreateClubEventPage({
                   </>
                 )}
 
-                {/* Fees */}
+                {/* Fees & Registration */}
                 {activeSection === 'fees' && (
                   <>
-                    <h2 className="text-lg font-bold text-white">Fees & Prize Pool</h2>
+                    <h2 className="text-lg font-bold text-white">Registration Method & Fees</h2>
+
+                    {/* Registration Mode Selector */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-2">Registration Mode *</label>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div
+                          onClick={() => {
+                            set('registration_mode', 'internal');
+                            set('unstop_url', '');
+                          }}
+                          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                            form.registration_mode === 'internal'
+                              ? 'bg-purple-950/50 border-purple-500 ring-2 ring-purple-500/30'
+                              : 'bg-white/5 border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <Globe size={16} className="text-purple-400" />
+                            <p className="text-white font-bold text-sm">Internal Portal</p>
+                          </div>
+                          <p className="text-slate-400 text-xs leading-relaxed">
+                            Students register directly on the Parinaam portal & get official festival QR passes.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => set('registration_mode', 'unstop')}
+                          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                            form.registration_mode === 'unstop'
+                              ? 'bg-gradient-to-br from-blue-950/60 to-indigo-950/60 border-blue-500 ring-2 ring-blue-500/40'
+                              : 'bg-white/5 border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <ExternalLink size={16} className="text-blue-400" />
+                            <p className="text-white font-bold text-sm">Unstop / External Link</p>
+                          </div>
+                          <p className="text-slate-400 text-xs leading-relaxed">
+                            Provide an Unstop competition link or external registration form URL.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Unstop Link Input */}
+                    {form.registration_mode === 'unstop' && (
+                      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-3">
+                        <FormField label="Unstop / External Registration Link *">
+                          <div className="flex gap-2">
+                            <input
+                              value={form.unstop_url}
+                              onChange={e => set('unstop_url', e.target.value)}
+                              placeholder="e.g. https://unstop.com/competitions/your-event-slug"
+                              className={`${inp} flex-1`}
+                            />
+                            {form.unstop_url && (
+                              <a
+                                href={form.unstop_url.startsWith('http') ? form.unstop_url : `https://${form.unstop_url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3.5 py-2.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/50 text-blue-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                                title="Test link in new tab"
+                              >
+                                <span>Test Link</span>
+                                <ExternalLink size={13} />
+                              </a>
+                            )}
+                          </div>
+                        </FormField>
+                        <p className="text-blue-300/80 text-[11px] leading-relaxed">
+                          💡 When published, students will see a prominent <strong>"Register on Unstop ↗"</strong> button on the event card and details page directing them to this external link.
+                        </p>
+                      </div>
+                    )}
+
                     <FormField label="Registration Fee (₹)">
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₹</span>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Building2, GraduationCap, MapPin, Save, Loader2, CheckCircle, Upload, AlertTriangle } from 'lucide-react';
 import { useRequireAuth, useAuth } from '@/context/AuthContext';
-import { isValidStudentName, MAX_STUDENT_NAME_LENGTH } from '@/lib/utils';
+import { isValidStudentName, MAX_STUDENT_NAME_LENGTH, isValidEmail } from '@/lib/utils';
 
 export default function ProfilePage() {
   const { user } = useRequireAuth();
@@ -15,13 +15,14 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
-    full_name: '', phone: '', college_name: '',
+    email: '', full_name: '', phone: '', college_name: '',
     department: '', year_of_study: '', city: '', roll_number: '',
   });
 
   useEffect(() => {
     if (!user) return;
     setForm({
+      email:        user.email        || '',
       full_name:    user.full_name    || '',
       phone:        user.phone        || '',
       college_name: user.college_name || '',
@@ -38,6 +39,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setErrorMsg('');
 
+    if (!isValidEmail(form.email)) {
+      setErrorMsg('Please enter a valid email address');
+      return;
+    }
+
     const nameCheck = isValidStudentName(form.full_name);
     if (!nameCheck.valid) {
       setErrorMsg(nameCheck.error || 'Student name is invalid');
@@ -45,10 +51,12 @@ export default function ProfilePage() {
     }
 
     setSaving(true);
+    // Send form data without roll_number to guarantee immutability
+    const { roll_number: _ignored, ...updatePayload } = form;
     const res = await fetch('/api/auth/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(updatePayload),
     });
     const data = await res.json();
     setSaving(false);
@@ -147,11 +155,17 @@ export default function ProfilePage() {
           )}
 
           <div>
-            <label className="text-xs font-medium text-slate-400 block mb-1.5">Email</label>
+            <label className="text-xs font-medium text-slate-400 block mb-1.5">Email Address</label>
             <div className="relative">
               <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"/>
-              <input value={user.email} disabled
-                className="w-full bg-white/3 border border-white/5 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-500 cursor-not-allowed"/>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value.toLowerCase().trim() }))}
+                placeholder="your.email@example.com"
+                className={`${inp} pl-9`}
+                required
+              />
             </div>
             {user.is_amrita_student && <p className="text-xs text-purple-400 mt-1">✓ Verified Amrita student</p>}
           </div>
@@ -214,15 +228,18 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-400 block mb-1.5">Roll / Registration Number</label>
+            <label className="text-xs font-medium text-slate-400 block mb-1.5">
+              Roll / Registration Number <span className="text-slate-500 font-normal">(Cannot be modified)</span>
+            </label>
             <div className="relative">
               <GraduationCap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"/>
               <input
                 value={form.roll_number}
-                onChange={e => setForm(p => ({ ...p, roll_number: e.target.value }))}
+                disabled
+                readOnly
+                title="Roll number cannot be changed after registration"
                 placeholder="Your roll/reg number"
-                className={`${inp} pl-9`}
-                required
+                className={`${inp} pl-9 opacity-50 cursor-not-allowed select-none bg-white/[0.02] border-white/5 text-slate-400`}
               />
             </div>
           </div>

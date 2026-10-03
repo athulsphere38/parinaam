@@ -39,8 +39,12 @@ export interface FestEvent {
   coordinators: Coordinator[];
   image: string;
   rulebookUrl?: string;
+  unstopUrl?: string;
+  registrationUrl?: string;
   isPopular?: boolean;
   registrationOpen: boolean;
+  clubName?: string;
+  clubColor?: string;
 }
 
 export interface Participant {

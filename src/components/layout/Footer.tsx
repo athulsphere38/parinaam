@@ -2,10 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { FEST_CONFIG } from '../../data/festData';
 import { MapPin, Mail, Phone, ExternalLink, ShieldCheck } from 'lucide-react';
 
 export const Footer = () => {
+  const pathname = usePathname();
+  if (pathname === '/auth/register' || pathname === '/register' || pathname?.startsWith('/auth/register')) {
+    return null;
+  }
+
   return (
     <footer className="bg-[#05080f] border-t border-slate-800 text-slate-400 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,35 +71,58 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Featured Club Events / Clusters */}
           <div>
             <h4 className="font-display font-bold text-white text-sm uppercase tracking-wider mb-4">
               Event Clusters
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/events?category=Coding+%26+Hackathon" className="hover:text-white transition-colors">
-                  HackArena & CodeStorm
+                <Link
+                  href="/events/6b55f19c-02ce-45b2-a107-0935e4e5babd"
+                  className="hover:text-white transition-colors"
+                >
+                  Harness.md Challenge
                 </Link>
               </li>
               <li>
-                <Link href="/events?category=Robotics" className="hover:text-white transition-colors">
-                  RoboWars & Combat Arena
+                <Link
+                  href="/events/fe459bfb-059b-4b90-8fb8-5e9ac9185417"
+                  className="hover:text-white transition-colors"
+                >
+                  Obstacle Robotic Racing
                 </Link>
               </li>
               <li>
-                <Link href="/events?category=Cultural" className="hover:text-white transition-colors">
-                  Battle of Bands & Dance
+                <Link
+                  href="/events/3c640142-44a4-4b06-8e76-68b2dda1c9e3"
+                  className="hover:text-white transition-colors"
+                >
+                  Tholu Bommalata Theatre
                 </Link>
               </li>
               <li>
-                <Link href="/events?category=Gaming" className="hover:text-white transition-colors">
-                  Valorant & BGMI LAN
+                <Link
+                  href="/events/9446dfef-14c7-406e-ab99-9abb83b3050e"
+                  className="hover:text-white transition-colors"
+                >
+                  HackoPoly AI Challenge
                 </Link>
               </li>
               <li>
-                <Link href="/events?category=Workshops" className="hover:text-white transition-colors">
-                  GenAI & Robotics Masterclasses
+                <Link
+                  href="/events/d3e77771-8860-4ce3-8906-3e0e6e8751f1"
+                  className="hover:text-white transition-colors"
+                >
+                  Garba Night
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/events/edd3b356-a5c6-4d01-a2e6-422ad74cc8e6"
+                  className="hover:text-white transition-colors"
+                >
+                  Neon Badminton
                 </Link>
               </li>
             </ul>
@@ -136,7 +165,7 @@ export const Footer = () => {
               Festival Guidelines
             </a>
             <span className="text-slate-400">
-              Built with 💜 by <span className="text-white font-medium">Student Council, Amrita Amaravati</span>
+              Built with 💜 by <span className="text-white font-medium">Chakravyuha Technical Club Amrita Amaravati</span>
             </span>
           </div>
         </div>

@@ -28,15 +28,68 @@ export async function GET(req: NextRequest) {
       params.push(clubId);
       paramIdx++;
     }
-    if (category) {
-      whereClause += ` AND e.category = $${paramIdx}`;
-      params.push(category);
-      paramIdx++;
+
+    if (category && category !== 'All') {
+      const catLower = category.toLowerCase().trim();
+      if (catLower === 'dance') {
+        whereClause += ` AND (e.category ILIKE '%dance%' OR e.tags::text ILIKE '%dance%' OR e.tags::text ILIKE '%garba%' OR e.tags::text ILIKE '%dandiya%' OR c.slug = 'nrityasparsh')`;
+      } else if (catLower === 'music') {
+        whereClause += ` AND (e.category ILIKE '%music%' OR e.tags::text ILIKE '%music%' OR e.tags::text ILIKE '%vocal%' OR e.tags::text ILIKE '%band%' OR c.slug = 'saptaswara' OR c.slug = 'avisruta')`;
+      } else if (catLower === 'film & media' || catLower === 'arts & media') {
+        whereClause += ` AND (e.category ILIKE '%media%' OR e.category ILIKE '%art%' OR e.tags::text ILIKE '%theatre%' OR e.tags::text ILIKE '%film%' OR e.tags::text ILIKE '%art%' OR c.slug = 'drisya' OR c.slug = 'prachurya')`;
+      } else if (catLower === 'cultural') {
+        whereClause += ` AND (e.category ILIKE '%cultural%' OR c.slug IN ('prachurya', 'saptaswara', 'nrityasparsh', 'drisya'))`;
+      } else if (catLower === 'technical') {
+        whereClause += ` AND (e.category ILIKE '%technical%' OR c.slug IN ('chakravyuha', 'relu', 'robotics', 'ieee', 'salesforce-agentblazer'))`;
+      } else if (catLower === 'coding & hackathon') {
+        whereClause += ` AND (e.category ILIKE '%coding%' OR e.category ILIKE '%hackathon%' OR e.tags::text ILIKE '%hackathon%' OR e.tags::text ILIKE '%coding%' OR e.name ILIKE '%hackathon%' OR e.name ILIKE '%challenge%')`;
+      } else if (catLower === 'gaming') {
+        whereClause += ` AND (e.category ILIKE '%gaming%' OR e.tags::text ILIKE '%gaming%' OR e.tags::text ILIKE '%badminton%' OR e.tags::text ILIKE '%sports%' OR e.tags::text ILIKE '%mafia%')`;
+      } else if (catLower === 'robotics') {
+        whereClause += ` AND (e.category ILIKE '%robotics%' OR e.tags::text ILIKE '%robot%' OR e.name ILIKE '%robot%')`;
+      } else {
+        whereClause += ` AND (e.category ILIKE $${paramIdx} OR e.tags::text ILIKE $${paramIdx})`;
+        params.push(`%${category}%`);
+        paramIdx++;
+      }
     }
-    if (search) {
-      whereClause += ` AND (e.name ILIKE $${paramIdx} OR e.tagline ILIKE $${paramIdx} OR e.short_description ILIKE $${paramIdx})`;
-      params.push(`%${search}%`);
-      paramIdx++;
+
+    if (search && search.trim()) {
+      const rawSearch = search.trim();
+      const STOP_WORDS = new Set(['from', 'by', 'in', 'at', 'the', 'and', 'of', 'a', 'an', 'for', 'with', 'on', 'to']);
+      
+      // Tokenize query into words
+      const rawTokens = rawSearch.split(/[\s,+/\\-]+/).filter(Boolean);
+      // Filter out stop words unless all words are stop words
+      const meaningfulTokens = rawTokens.filter(t => !STOP_WORDS.has(t.toLowerCase()));
+      const termsToSearch = meaningfulTokens.length > 0 ? meaningfulTokens : rawTokens;
+
+      // Alias mapping for common misspellings or variations
+      const getTermVariants = (term: string): string[] => {
+        const t = term.toLowerCase();
+        const variants = [t];
+        if (t === 'drsya') variants.push('drisya');
+        if (t === 'drisya') variants.push('drsya');
+        if (t === 'avisrutha') variants.push('avisruta');
+        if (t === 'avisruta') variants.push('avisrutha');
+        if (t === 'harness') variants.push('harness.md');
+        if (t === 'nritya' || t === 'sparsh') variants.push('nrityasparsh');
+        return Array.from(new Set(variants));
+      };
+
+      // Each search term must match SOME field in the event or its club
+      termsToSearch.forEach(term => {
+        const variants = getTermVariants(term);
+        const subConditions: string[] = [];
+        variants.forEach(v => {
+          subConditions.push(
+            `e.name ILIKE $${paramIdx} OR e.tagline ILIKE $${paramIdx} OR e.short_description ILIKE $${paramIdx} OR c.name ILIKE $${paramIdx} OR c.slug ILIKE $${paramIdx} OR e.category ILIKE $${paramIdx} OR e.tags::text ILIKE $${paramIdx} OR e.venue ILIKE $${paramIdx}`
+          );
+          params.push(`%${v}%`);
+          paramIdx++;
+        });
+        whereClause += ` AND (${subConditions.join(' OR ')})`;
+      });
     }
 
     const [eventsResult, countResult] = await Promise.all([
@@ -46,9 +99,10 @@ export async function GET(req: NextRequest) {
           e.category, e.tags, e.venue, e.date_start, e.date_end,
           e.start_time, e.end_time, e.day_number, e.min_team_size,
           e.max_team_size, e.capacity, e.enrolled, e.fee, e.prize_pool,
-          e.poster_url, e.status, 
+          e.poster_url, e.rulebook_url, e.unstop_url, e.registration_url, e.status, 
           (CASE WHEN e.status = 'published' AND (e.registration_open IS NULL OR e.registration_open = false) THEN true ELSE e.registration_open END) as registration_open,
           e.is_popular, e.is_featured, e.created_at,
+          e.amrita_fee, e.other_fee,
           c.id as club_id, c.name as club_name, c.slug as club_slug, c.color as club_color
          FROM events e
          JOIN clubs c ON e.club_id = c.id
@@ -58,7 +112,7 @@ export async function GET(req: NextRequest) {
         [...params, limit, offset]
       ),
       db.query(
-        `SELECT COUNT(*) FROM events e ${whereClause}`,
+        `SELECT COUNT(*) FROM events e JOIN clubs c ON e.club_id = c.id ${whereClause}`,
         params
       )
     ]);
@@ -96,10 +150,11 @@ export async function POST(req: NextRequest) {
       min_team_size = 1, max_team_size = 1,
       capacity, fee = 0, prize_pool, eligibility,
       rules = [], rounds = [], coordinators = [],
-      poster_url, rulebook_url, status = 'draft',
+      poster_url, rulebook_url, unstop_url, registration_url, status = 'draft',
       registration_open = body.registration_open !== undefined ? body.registration_open : (status === 'published'),
       is_popular = false,
       club_id: bodyClubId,
+      amrita_fee, other_fee,
     } = body;
 
     if (!name) return error('Event name is required');
@@ -155,17 +210,23 @@ export async function POST(req: NextRequest) {
     const parsedRounds = JSON.stringify(Array.isArray(rounds) ? rounds : []);
     const parsedCoordinators = JSON.stringify(Array.isArray(coordinators) ? coordinators : []);
 
+    const effectiveUnstopUrl = (unstop_url || registration_url || '').trim() || null;
+    const effectiveRegUrl = (registration_url || unstop_url || '').trim() || null;
+
+    const parsedAmritaFee = amrita_fee !== undefined && amrita_fee !== null && amrita_fee !== '' ? parseInt(String(amrita_fee)) : null;
+    const parsedOtherFee = other_fee !== undefined && other_fee !== null && other_fee !== '' ? parseInt(String(other_fee)) : null;
+
     const result = await db.query(
       `INSERT INTO events (
         club_id, created_by, name, event_code, tagline, short_description,
         full_description, category, tags, venue, date_start, date_end,
         start_time, end_time, day_number, min_team_size, max_team_size,
         capacity, fee, prize_pool, eligibility, rules, rounds,
-        coordinators, poster_url, rulebook_url, status,
-        registration_open, is_popular
+        coordinators, poster_url, rulebook_url, unstop_url, registration_url, status,
+        registration_open, is_popular, amrita_fee, other_fee
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
-        $16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+        $16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33
       ) RETURNING *`,
       [
         clubId, session.userId, name, eventCode, tagline,
@@ -177,7 +238,8 @@ export async function POST(req: NextRequest) {
         parsedRules,
         parsedRounds,
         parsedCoordinators,
-        poster_url, rulebook_url, status, registration_open, is_popular
+        poster_url, rulebook_url, effectiveUnstopUrl, effectiveRegUrl, status, registration_open, is_popular,
+        parsedAmritaFee, parsedOtherFee
       ]
     );
 

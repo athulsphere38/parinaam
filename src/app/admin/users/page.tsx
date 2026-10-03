@@ -8,7 +8,7 @@ import {
   Users, Shield, Building2, Download, ChevronLeft, ChevronRight,
   GraduationCap, Calendar, Phone, Mail, IdCard, AlertTriangle,
   RotateCcw, Sparkles, Check, X, ShieldAlert, CreditCard, Save,
-  Loader2, RefreshCw
+  Loader2, RefreshCw, Trophy, MapPin
 } from 'lucide-react';
 import { useRequireRole } from '@/context/AuthContext';
 import { isValidEmail, isValidStudentName, MAX_STUDENT_NAME_LENGTH } from '@/lib/utils';
@@ -43,6 +43,59 @@ interface UserStats {
   external_count: number;
   pending_count: number;
   verified_count: number;
+}
+
+export interface StudentRegistrationRecord {
+  registration_id: string;
+  registration_status: string;
+  payment_status: string;
+  amount_paid: number;
+  team_name: string | null;
+  team_members: any;
+  registered_at: string;
+  confirmed_at: string | null;
+  event_id: string;
+  event_name: string;
+  event_code: string;
+  category: string;
+  venue: string;
+  date_start: string;
+  start_time: string;
+  end_time: string;
+  day_number: number;
+  event_fee: number;
+  poster_url: string;
+  club_id: string;
+  club_name: string;
+  club_slug: string;
+  club_color: string;
+  attendance_id: string | null;
+  checked_in_at: string | null;
+  attendance_status: string | null;
+}
+
+export interface StudentPaymentRecord {
+  payment_id: string;
+  cf_order_id?: string;
+  cf_payment_id?: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  amount: number;
+  currency: string;
+  status: string;
+  notes: any;
+  created_at: string;
+}
+
+export interface StudentFullProfile {
+  user: User & {
+    verified_at?: string;
+    verified_by_name?: string;
+    verified_by_email?: string;
+  };
+  registrations: StudentRegistrationRecord[];
+  payments: StudentPaymentRecord[];
+  attendance: any[];
 }
 
 const BRANCHES = ['CSE', 'CSE-AIE', 'AIDS', 'CCE', 'ECE', 'QUANTUM'];
@@ -114,12 +167,15 @@ export default function AdminUsersPage() {
   const [feeFilter, setFeeFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  // Modals
+  // Modals & Details
   const [viewUser, setViewUser] = useState<User | null>(null);
+  const [fullDetail, setFullDetail] = useState<StudentFullProfile | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [zoomedIdCard, setZoomedIdCard] = useState<string | null>(null);
 
   // Edit form state
   const [editForm, setEditForm] = useState<{
@@ -211,6 +267,23 @@ export default function AdminUsersPage() {
     setPage(1);
   };
 
+  const openViewModal = async (u: User) => {
+    setViewUser(u);
+    setFullDetail(null);
+    setViewLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}?t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setFullDetail(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load full student details:', err);
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   const handleVerify = async (userId: string, status: 'verified' | 'rejected', note?: string) => {
     setActionLoading(true);
     try {
@@ -222,15 +295,37 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (data.success) {
         showToast(`Account ${status} successfully!`);
+        // Immediately sync local state
+        setUsers(prev => prev.map(u => u.id === userId ? {
+          ...u,
+          verification_status: status,
+          platform_fee_paid: status === 'verified' ? true : u.platform_fee_paid
+        } : u));
+        if (viewUser && viewUser.id === userId) {
+          setViewUser(prev => prev ? {
+            ...prev,
+            verification_status: status,
+            platform_fee_paid: status === 'verified' ? true : prev.platform_fee_paid
+          } : null);
+        }
+        if (fullDetail && fullDetail.user.id === userId) {
+          setFullDetail(prev => prev ? {
+            ...prev,
+            user: {
+              ...prev.user,
+              verification_status: status,
+              platform_fee_paid: status === 'verified' ? true : prev.user.platform_fee_paid,
+              verified_at: new Date().toISOString(),
+              verified_by_name: me?.full_name || 'Super Admin',
+            }
+          } : null);
+        }
       }
     } catch (e) {
       console.error('Verification error:', e);
     } finally {
       setActionLoading(false);
       fetchUsers();
-      if (viewUser && viewUser.id === userId) {
-        setViewUser(prev => prev ? { ...prev, verification_status: status } : null);
-      }
     }
   };
 
@@ -427,7 +522,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Top KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <p className="text-slate-400 text-xs font-medium">Total Registered</p>
             <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
@@ -465,7 +560,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 flex-wrap">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex gap-2 flex-wrap">
               {/* Institution */}
               <select
                 value={typeFilter}
@@ -684,9 +779,9 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => setViewUser(u)}
+                            onClick={() => openViewModal(u)}
                             className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/30 text-slate-300 hover:text-purple-200 border border-white/10 transition-colors"
-                            title="View Full Details"
+                            title="View Full Student Data & Events"
                           >
                             <Eye size={13} />
                           </button>
@@ -729,8 +824,8 @@ export default function AdminUsersPage() {
           {total > 0 && (
             <div className="px-4 py-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <div className="text-slate-400">
-                Showing <strong className="text-white">{Math.min(total, (page - 1) * 20 + 1)}</strong> to{' '}
-                <strong className="text-white">{Math.min(total, page * 20)}</strong> of{' '}
+                Showing <strong className="text-white">{Math.min(total, (page - 1) * 30 + 1)}</strong> to{' '}
+                <strong className="text-white">{Math.min(total, page * 30)}</strong> of{' '}
                 <strong className="text-white">{total}</strong> students
               </div>
 
@@ -757,116 +852,336 @@ export default function AdminUsersPage() {
           )}
         </div>
 
-        {/* 1. VIEW PROFILE MODAL */}
+        {/* 1. COMPREHENSIVE VIEW STUDENT PROFILE & EVENTS MODAL */}
         <AnimatePresence>
           {viewUser && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-xl bg-[#0e071c] border border-purple-500/30 rounded-2xl overflow-hidden shadow-2xl relative"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-w-3xl bg-[#0c071a] border border-purple-500/30 rounded-2xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col"
               >
-                <div className="p-5 border-b border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white">
+                {/* Modal Header */}
+                <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-purple-900/30">
                       {((viewUser.full_name || viewUser.email || 'S').charAt(0)).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-base">{viewUser.full_name || viewUser.email}</h3>
-                      <p className="text-xs text-slate-400">{viewUser.email}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-white text-lg leading-tight">
+                          {viewUser.full_name || 'Student Profile'}
+                        </h3>
+                        {viewUser.is_amrita_student ? (
+                          <span className="text-[10px] font-semibold text-purple-300 bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 rounded-md">
+                            Amrita Student
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-cyan-300 bg-cyan-500/20 border border-cyan-500/40 px-2 py-0.5 rounded-md">
+                            External College
+                          </span>
+                        )}
+                        {viewUser.verification_status === 'verified' ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                            <CheckCircle size={11} /> Verified Account
+                          </span>
+                        ) : viewUser.verification_status === 'rejected' ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-full">
+                            <XCircle size={11} /> Rejected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                            <AlertTriangle size={11} /> Pending Review
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{viewUser.email} {viewUser.phone && `· 📞 ${viewUser.phone}`}</p>
                     </div>
                   </div>
                   <button
-                    onClick={() => setViewUser(null)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                    onClick={() => { setViewUser(null); setFullDetail(null); }}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                   >
-                    <X size={18} />
+                    <X size={20} />
                   </button>
                 </div>
 
-                <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-3 text-xs bg-white/5 p-4 rounded-xl border border-white/5">
-                    <div>
-                      <p className="text-slate-500">Institution</p>
-                      <p className="font-semibold text-slate-200 mt-0.5">
-                        {viewUser.is_amrita_student ? 'Amrita Vishwa Vidyapeetham, Amaravati' : (viewUser.college_name || 'External')}
-                      </p>
+                {/* Modal Body */}
+                <div className="p-5 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+                  {viewLoading ? (
+                    <div className="py-16 text-center text-slate-400 space-y-3">
+                      <Loader2 size={32} className="animate-spin mx-auto text-purple-400" />
+                      <p className="text-xs font-semibold">Loading complete student profile, registered events & audit log...</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500">Roll Number</p>
-                      <p className="font-mono font-semibold text-purple-300 mt-0.5">
-                        {viewUser.roll_number || 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Branch</p>
-                      <p className="font-semibold text-slate-200 mt-0.5">
-                        {viewUser.department || 'Not Specified'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Year of Study</p>
-                      <p className="font-semibold text-slate-200 mt-0.5">
-                        {viewUser.year_of_study ? `Year ${viewUser.year_of_study}` : 'Not Specified'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Phone</p>
-                      <p className="font-mono text-slate-200 mt-0.5">{viewUser.phone || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">City</p>
-                      <p className="text-slate-200 mt-0.5">{viewUser.city || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Registration Date & Time (IST)</p>
-                      <p className="font-mono text-slate-300 mt-0.5">{formatDateTimeIST(viewUser.created_at)}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">KYC Verification Status</p>
-                      <p className={`font-semibold capitalize mt-0.5 ${
-                        viewUser.verification_status === 'verified' ? 'text-emerald-400' :
-                        viewUser.verification_status === 'rejected' ? 'text-red-400' : 'text-amber-400'
-                      }`}>
-                        {viewUser.verification_status || 'Pending'}
-                      </p>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* 1. Academic & Identity Matrix */}
+                      <div>
+                        <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                          <GraduationCap size={14} /> Student Academic & Contact Details
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs bg-white/[0.03] p-4 rounded-xl border border-white/10">
+                          <div>
+                            <p className="text-slate-500 text-[11px]">College / University</p>
+                            <p className="font-semibold text-slate-200 mt-0.5">
+                              {viewUser.is_amrita_student ? 'Amrita Vishwa Vidyapeetham, Amaravati' : (viewUser.college_name || 'External College')}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 text-[11px]">Roll / Student Number</p>
+                            <p className="font-mono font-bold text-purple-300 mt-0.5">
+                              {viewUser.roll_number || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 text-[11px]">Branch / Department</p>
+                            <p className="font-semibold text-slate-200 mt-0.5">
+                              {viewUser.department || 'Not Specified'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 text-[11px]">Year of Study</p>
+                            <p className="font-semibold text-slate-200 mt-0.5">
+                              {viewUser.year_of_study ? `Year ${viewUser.year_of_study}` : 'Not Specified'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 text-[11px]">City / Location</p>
+                            <p className="text-slate-200 mt-0.5">{viewUser.city || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500 text-[11px]">Account Created (IST)</p>
+                            <p className="font-mono text-slate-300 mt-0.5">{formatDateTimeIST(viewUser.created_at)}</p>
+                          </div>
+                          {fullDetail?.user.verified_at && (
+                            <div>
+                              <p className="text-slate-500 text-[11px]">Verified Timestamp (IST)</p>
+                              <p className="font-mono text-emerald-400 font-semibold mt-0.5">
+                                {formatDateTimeIST(fullDetail.user.verified_at)}
+                              </p>
+                            </div>
+                          )}
+                          {fullDetail?.user.verified_by_name && (
+                            <div>
+                              <p className="text-slate-500 text-[11px]">Verified By</p>
+                              <p className="text-slate-200 font-medium mt-0.5">
+                                {fullDetail.user.verified_by_name}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-slate-500 text-[11px]">Pass Status</p>
+                            <p className="mt-0.5">
+                              {viewUser.verification_status !== 'verified' ? (
+                                <span className="font-semibold text-amber-400">Pending Approval</span>
+                              ) : viewUser.is_amrita_student ? (
+                                <span className="font-semibold text-purple-300">Free Amrita Pass</span>
+                              ) : viewUser.platform_fee_paid ? (
+                                <span className="font-semibold text-emerald-400">Paid Pass Active</span>
+                              ) : (
+                                <span className="font-semibold text-red-400">Unpaid</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* ID Card Viewer */}
-                  {viewUser.id_card_url && (
-                    <div className="border border-white/10 rounded-xl p-3 bg-white/5">
-                      <p className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
-                        <IdCard size={14} className="text-purple-400" /> Uploaded College ID Card
-                      </p>
-                      <img
-                        src={viewUser.id_card_url}
-                        alt="College ID"
-                        className="w-full max-h-56 object-contain rounded-lg bg-black/50"
-                      />
+                      {/* 2. Uploaded ID Card (if available) */}
+                      {viewUser.id_card_url && (
+                        <div>
+                          <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <IdCard size={14} /> Uploaded College ID Card
+                          </h4>
+                          <div className="border border-white/10 rounded-xl p-3 bg-white/[0.02]">
+                            <img
+                              src={viewUser.id_card_url}
+                              alt="Uploaded College ID"
+                              onClick={() => setZoomedIdCard(viewUser.id_card_url)}
+                              className="w-full max-h-56 object-contain rounded-lg bg-black/60 cursor-pointer hover:opacity-95 transition-opacity"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1.5 text-center">Click image to inspect full-size</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3. Registered Events Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5">
+                          <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <Trophy size={14} /> Registered Events & Activity Timeline ({fullDetail?.registrations?.length || 0})
+                          </h4>
+                        </div>
+
+                        {(!fullDetail || !fullDetail.registrations || fullDetail.registrations.length === 0) ? (
+                          <div className="bg-white/[0.02] border border-white/10 rounded-xl p-6 text-center text-slate-500 text-xs">
+                            <Calendar size={24} className="mx-auto mb-1.5 text-slate-600" />
+                            <p className="text-slate-400 font-medium">No event registrations found for this student.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {fullDetail.registrations.map(reg => (
+                              <div
+                                key={reg.registration_id}
+                                className="bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-xl p-3.5 transition-colors space-y-2"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-bold text-white text-sm">{reg.event_name}</span>
+                                      <span
+                                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-white shadow-sm"
+                                        style={{ backgroundColor: reg.club_color || '#9333ea' }}
+                                      >
+                                        {reg.club_name}
+                                      </span>
+                                      <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                        {reg.category}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 flex-wrap">
+                                      {reg.venue && <span>📍 {reg.venue}</span>}
+                                      {reg.date_start && (
+                                        <span>📅 {new Date(reg.date_start).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                      )}
+                                      {reg.start_time && <span>⏰ {reg.start_time}</span>}
+                                      {reg.team_name && <span className="text-purple-300 font-medium">👥 Team: {reg.team_name}</span>}
+                                    </div>
+                                  </div>
+
+                                  {/* Exact Registered Timestamp */}
+                                  <div className="sm:text-right shrink-0">
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Registered At (IST)</p>
+                                    <p className="font-mono text-xs text-purple-200 font-bold mt-0.5">
+                                      {formatDateTimeIST(reg.registered_at)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Status & Attendance Bar */}
+                                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs flex-wrap gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                      reg.registration_status === 'CONFIRMED'
+                                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                        : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                    }`}>
+                                      {reg.registration_status}
+                                    </span>
+                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                                      reg.payment_status === 'paid'
+                                        ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
+                                        : 'bg-white/5 text-slate-400'
+                                    }`}>
+                                      {reg.amount_paid > 0 ? `₹${reg.amount_paid} Paid` : 'Free Registration'}
+                                    </span>
+                                  </div>
+
+                                  {/* Attendance Check-in Info */}
+                                  <div>
+                                    {reg.checked_in_at ? (
+                                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                                        <CheckCircle size={12} /> Checked-in {formatDateTimeIST(reg.checked_in_at)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] text-slate-500 font-mono">
+                                        ⏳ Not Checked In
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4. Payment History (if any) */}
+                      {fullDetail?.payments && fullDetail.payments.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <CreditCard size={14} /> Cashfree Payments Audit ({fullDetail.payments.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {fullDetail.payments.map(p => (
+                              <div key={p.payment_id} className="bg-white/[0.02] border border-white/10 rounded-xl p-3 flex items-center justify-between text-xs">
+                                <div>
+                                  <p className="font-mono text-white font-semibold">{p.cf_payment_id || p.cf_order_id || p.razorpay_payment_id || p.razorpay_order_id || 'Direct Payment'}</p>
+                                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">{formatDateTimeIST(p.created_at)}</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-emerald-400 font-mono text-sm">₹{Math.round(Number(p.amount || 0) / 100)}</span>
+                                  <p className="text-[10px] text-emerald-300 font-semibold uppercase">{p.status}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Modal Footer / Verification Action */}
+                <div className="p-4 border-t border-white/10 bg-[#080413] flex items-center justify-between gap-3">
+                  {viewUser.verification_status === 'verified' ? (
+                    <div className="w-full flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5">
+                      <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                        <CheckCircle size={16} />
+                        <span>✓ Verified Student Account & Pass Active</span>
+                      </div>
+                      <span className="text-[11px] text-emerald-300 font-mono">
+                        {fullDetail?.user.verified_at ? `Verified: ${formatDateTimeIST(fullDetail.user.verified_at)}` : 'Approved'}
+                      </span>
+                    </div>
+                  ) : viewUser.verification_status === 'rejected' ? (
+                    <div className="w-full flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">
+                      <div className="flex items-center gap-2 text-red-400 font-semibold text-xs">
+                        <XCircle size={16} />
+                        <span>Student Account Rejected</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full flex items-center gap-3">
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleVerify(viewUser.id, 'verified')}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-900/30"
+                      >
+                        <CheckCircle size={14} /> Approve & Verify Pass
+                      </button>
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleVerify(viewUser.id, 'rejected')}
+                        className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                      >
+                        <XCircle size={14} /> Reject
+                      </button>
                     </div>
                   )}
-
-                  {/* Verification Actions */}
-                  <div className="pt-2 flex items-center gap-2">
-                    <button
-                      disabled={actionLoading}
-                      onClick={() => handleVerify(viewUser.id, 'verified')}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      <CheckCircle size={14} /> Approve & Verify
-                    </button>
-                    <button
-                      disabled={actionLoading}
-                      onClick={() => handleVerify(viewUser.id, 'rejected')}
-                      className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                    >
-                      <XCircle size={14} /> Reject
-                    </button>
-                  </div>
                 </div>
               </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Full Image Zoom Modal */}
+        <AnimatePresence>
+          {zoomedIdCard && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+              <div className="relative max-w-4xl w-full">
+                <button
+                  onClick={() => setZoomedIdCard(null)}
+                  className="absolute -top-10 right-0 p-2 text-white hover:text-slate-300 bg-white/10 rounded-full"
+                >
+                  <X size={20} />
+                </button>
+                <img
+                  src={zoomedIdCard}
+                  alt="Zoomed ID Card"
+                  className="w-full max-h-[85vh] object-contain rounded-2xl border border-white/20 shadow-2xl bg-black"
+                />
+              </div>
             </div>
           )}
         </AnimatePresence>

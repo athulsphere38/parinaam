@@ -26,6 +26,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
 /scratch/
 
 # vercel
@@ -40,8 +41,11 @@ next-env.d.ts
 /avinya/
 /avustra/
 /chakravyuha/
+/drysha/
+/IEEE/
 /logos/
 /nritya sparsh/
 /relu/
 /robotics/
 /spataswara/
+/prachurya/

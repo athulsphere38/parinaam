@@ -49,7 +49,7 @@ const INCLUDED_FLAGSHIP_EVENTS = [
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Cashfree: any;
   }
 }
 
@@ -75,7 +75,7 @@ export default function RegisterPage() {
   } | null>(null);
 
   const [registeredUserSession, setRegisteredUserSession] = useState<any>(null);
-  const [pendingRazorpayOrder, setPendingRazorpayOrder] = useState<any>(null);
+  const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
   const [form, setForm] = useState<RegisterData & { confirmPassword: string }>({
     student_type: 'other',
@@ -95,17 +95,39 @@ export default function RegisterPage() {
   useEffect(() => {
     if (user && user.platform_fee_paid && !paymentSuccessData) {
       router.push('/dashboard');
+    } else if (user && !user.is_amrita_student && !user.platform_fee_paid && !registeredUserSession) {
+      setRegisteredUserSession(user);
+      setStudentType('other');
+      setForm(f => ({
+        ...f,
+        student_type: 'other',
+        email: user.email || '',
+        full_name: user.full_name || '',
+        phone: user.phone || '',
+        college_name: user.college_name || '',
+        roll_number: user.roll_number || '',
+        department: user.department || '',
+        year_of_study: user.year_of_study || '',
+        city: user.city || '',
+      }));
+      setStep(2);
     }
-  }, [user, router, paymentSuccessData]);
+  }, [user, router, paymentSuccessData, registeredUserSession]);
 
-  // Load Razorpay checkout script on mount
+  // Load Cashfree checkout SDK script on mount safely
   useEffect(() => {
-    if (!document.getElementById('razorpay-checkout-script')) {
-      const script = document.createElement('script');
-      script.id = 'razorpay-checkout-script';
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      document.body.appendChild(script);
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      if (!document.getElementById('cashfree-checkout-script') && !window.Cashfree) {
+        try {
+          const script = document.createElement('script');
+          script.id = 'cashfree-checkout-script';
+          script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+          script.async = true;
+          document.body.appendChild(script);
+        } catch {
+          // ignore
+        }
+      }
     }
   }, []);
 
@@ -241,7 +263,7 @@ export default function RegisterPage() {
 
       if (json.success && json.data) {
         setRegisteredUserSession(json.data.user);
-        setPendingRazorpayOrder(json.data.razorpay_order);
+        setPendingPaymentOrder(json.data.cashfree_order);
 
         // If Amrita student (free pass), complete immediately!
         if (isAmritaSelected) {
@@ -264,13 +286,13 @@ export default function RegisterPage() {
     setStep(s => s + 1);
   };
 
-  // Launch Razorpay for ₹1000 Outside Student Pass
-  const handleRazorpayPayment = async () => {
+  // Launch Cashfree for ₹1000 Outside Student Pass
+  const handleCashfreePayment = async () => {
     setError('');
     setPaymentProcessing(true);
 
-    let rzpOrder = pendingRazorpayOrder;
-    if (!rzpOrder || !rzpOrder.order_id || !rzpOrder.order_id.startsWith('order_')) {
+    let cfOrder = pendingPaymentOrder;
+    if (!cfOrder || !cfOrder.payment_session_id) {
       try {
         const orderRes = await fetch('/api/payments/create-order', {
           method: 'POST',
@@ -278,9 +300,12 @@ export default function RegisterPage() {
           body: JSON.stringify({ type: 'platform_fee' }),
         });
         const orderJson = await orderRes.json();
-        if (orderJson.success && orderJson.data && orderJson.data.order_id) {
-          rzpOrder = orderJson.data;
-          setPendingRazorpayOrder(rzpOrder);
+        if (orderJson.success && orderJson.data && orderJson.data.payment_session_id) {
+          cfOrder = {
+            ...orderJson.data,
+            registration_token: pendingPaymentOrder?.registration_token,
+          };
+          setPendingPaymentOrder(cfOrder);
         } else {
           setError(orderJson.error || 'Failed to create payment order. Please try again.');
           setPaymentProcessing(false);
@@ -293,86 +318,64 @@ export default function RegisterPage() {
       }
     }
 
-    const rzpKey = rzpOrder?.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-
-    if (typeof window.Razorpay === 'undefined') {
-      setError('Payment gateway is loading. Please try again in a few seconds.');
-      setPaymentProcessing(false);
-      return;
-    }
-
-    const options = {
-      key: rzpKey,
-      amount: rzpOrder?.amount || 100000, // 100000 paise = ₹1000
-      currency: 'INR',
-      name: 'PARINAAM 2026',
-      description: 'Official Festival Pass (Includes 4 Flagship Events)',
-      order_id: rzpOrder?.order_id,
-      prefill: {
-        name: form.full_name || registeredUserSession?.full_name || '',
-        email: form.email || registeredUserSession?.email || '',
-        contact: form.phone || registeredUserSession?.phone || '',
-      },
-      theme: {
-        color: '#9333ea',
-      },
-      handler: async function (response: any) {
-        try {
-          const verifyRes = await fetch('/api/payments/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              payment_db_id: rzpOrder?.payment_db_id,
-              razorpay_order_id: response.razorpay_order_id || rzpOrder?.order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              type: 'platform_fee',
-            }),
-          });
-
-          const verifyData = await verifyRes.json();
-          setPaymentProcessing(false);
-
-          if (verifyData.success) {
-            setPaymentSuccessData({
-              qrToken: verifyData.data?.qr_token || registeredUserSession?.qr_token || registeredUserSession?.id,
-              studentName: form.full_name || registeredUserSession?.full_name || 'Student',
-              amount: 1000,
+    try {
+      const { launchCashfreeCheckout } = await import('@/lib/cashfreeCheckout');
+      await launchCashfreeCheckout({
+        paymentSessionId: cfOrder.payment_session_id,
+        orderId: cfOrder.order_id,
+        paymentDbId: cfOrder.payment_db_id,
+        onSuccess: async (details: any) => {
+          try {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                payment_db_id: cfOrder?.payment_db_id,
+                order_id: cfOrder?.order_id,
+                cf_order_id: cfOrder?.cf_order_id || cfOrder?.order_id,
+                cf_payment_id: details?.paymentDetails?.cf_payment_id || `cfpay_${Date.now()}`,
+                registration_token: cfOrder?.registration_token,
+                type: 'platform_fee',
+              }),
             });
-            refreshUser();
-          } else {
-            setError(verifyData.error || 'Payment verification failed. Please contact support.');
+
+            const verifyData = await verifyRes.json();
+            setPaymentProcessing(false);
+
+            if (verifyData.success) {
+              setPaymentSuccessData({
+                qrToken: verifyData.data?.qr_token || registeredUserSession?.qr_token || registeredUserSession?.id,
+                studentName: form.full_name || registeredUserSession?.full_name || 'Student',
+                amount: 1000,
+              });
+              refreshUser();
+            } else {
+              setError(verifyData.error || 'Payment verification failed. Please contact support.');
+            }
+          } catch {
+            setPaymentProcessing(false);
+            setError('Network error verifying payment. Please refresh your dashboard.');
           }
-        } catch {
+        },
+        onFailure: (errMsg: string) => {
           setPaymentProcessing(false);
-          setError('Network error verifying payment. Please refresh your dashboard.');
-        }
-      },
-      modal: {
-        ondismiss: function () {
+          setError(errMsg || 'Payment failed. Please try again.');
+        },
+        onDismiss: () => {
           setPaymentProcessing(false);
         },
-      },
-    };
-
-    try {
-      const razorpayInstance = new window.Razorpay(options);
-      razorpayInstance.on('payment.failed', function (resp: any) {
-        setPaymentProcessing(false);
-        setError(`Payment failed: ${resp?.error?.description || 'Transaction declined'}`);
       });
-      razorpayInstance.open();
     } catch (err: any) {
       setPaymentProcessing(false);
-      setError('Could not open payment window. Please try again.');
+      setError('Could not open Cashfree payment window. Please try again.');
     }
   };
 
   // SUCCESS SCREEN (Payment Verified & QR Generated)
   if (paymentSuccessData) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden py-12">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden w-full max-w-full py-12">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 lg:w-[600px] h-64 sm:h-96 lg:h-[600px] bg-purple-600/15 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -439,8 +442,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden py-12">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden w-full max-w-full py-12">
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 lg:w-[650px] h-64 sm:h-96 lg:h-[650px] bg-purple-600/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -458,11 +461,11 @@ export default function RegisterPage() {
         </div>
 
         {/* Steps indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 flex-wrap sm:flex-nowrap">
           {STEPS.map((s, i) => (
             <React.Fragment key={s}>
               <div
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-all ${
+                className={`flex items-center gap-1 text-[10px] sm:text-xs font-medium px-2.5 sm:px-3 py-1 rounded-full transition-all ${
                   i === step
                     ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
                     : i < step
@@ -470,11 +473,11 @@ export default function RegisterPage() {
                     : 'bg-white/5 text-slate-500'
                 }`}
               >
-                {i < step ? <CheckCircle size={12} /> : <span className="w-4 text-center">{i + 1}</span>}
-                {s}
+                {i < step ? <CheckCircle size={12} /> : <span className="w-3.5 sm:w-4 text-center">{i + 1}</span>}
+                <span>{s}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-px ${i < step ? 'bg-emerald-600/50' : 'bg-white/10'}`} />
+                <div className={`hidden sm:block flex-1 h-px ${i < step ? 'bg-emerald-600/50' : 'bg-white/10'}`} />
               )}
             </React.Fragment>
           ))}
@@ -686,6 +689,8 @@ export default function RegisterPage() {
                     <input
                       type="text"
                       maxLength={MAX_STUDENT_NAME_LENGTH}
+                      pattern="^[A-Za-z]+(?: [A-Za-z]+)*$"
+                      required
                       value={form.full_name}
                       onChange={e => set('full_name', e.target.value.slice(0, MAX_STUDENT_NAME_LENGTH))}
                       placeholder="e.g. Rahul Sharma"
@@ -884,7 +889,7 @@ export default function RegisterPage() {
               </motion.div>
             )}
 
-            {/* STEP 2: Pass Confirmation & Razorpay Payment */}
+            {/* STEP 2: Pass Confirmation & Cashfree Payment */}
             {step === 2 && (
               <motion.div
                 key="step2"
@@ -951,14 +956,14 @@ export default function RegisterPage() {
 
                       <button
                         type="button"
-                        onClick={handleRazorpayPayment}
+                        onClick={handleCashfreePayment}
                         disabled={paymentProcessing}
                         className="w-2/3 bg-gradient-to-r from-emerald-600 via-purple-600 to-pink-600 hover:from-emerald-500 hover:to-pink-500 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-xl shadow-purple-900/40 flex items-center justify-center gap-2 text-sm disabled:opacity-50 active:scale-95"
                       >
                         {paymentProcessing ? (
                           <>
                             <Loader2 size={16} className="animate-spin" />
-                            <span>Processing Razorpay...</span>
+                            <span>Processing Cashfree...</span>
                           </>
                         ) : (
                           <>

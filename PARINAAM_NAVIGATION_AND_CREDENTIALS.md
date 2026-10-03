@@ -183,3 +183,15 @@ Each club has its own dedicated portal for managing events, reviewing attendee l
 | **Pronites** | [`http://localhost:3000/pronites`](http://localhost:3000/pronites) | Celebrity artist concerts & DJ nights |
 | **Merchandise** | [`http://localhost:3000/merch`](http://localhost:3000/merch) | Official fest apparel & goodies |
 | **Hospitality** | [`http://localhost:3000/hospitality`](http://localhost:3000/hospitality) | Accommodation, food, and campus guidelines |
+
+---
+
+## 💳 4. Payment Gateway (Cashfree LIVE Production)
+
+- **Provider:** Cashfree Payment Gateway
+- **API Version:** `2023-08-01`
+- **Environment:** `production` (Live)
+- **App ID (x-client-id):** `1454372309defa4f81be166e22e2734541`
+- **Secret Key (x-client-secret):** `[Configured in .env.local / .env.production]`
+- **Checkout JS SDK:** `https://sdk.cashfree.com/js/v3/cashfree.js`
+

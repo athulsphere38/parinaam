@@ -4,18 +4,29 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { ShoppingBag, X, ArrowRight } from 'lucide-react';
 
+import { TeamMember } from '@/components/events/TeamMemberSelector';
+
 interface ToastNotification {
   id: string;
   message: string;
   eventName?: string;
 }
 
+export interface CartTeamData {
+  teamMembers?: TeamMember[];
+  teamName?: string;
+  participationType?: 'individual' | 'team';
+}
+
 interface CartContextType {
   cartItemIds: string[];
+  cartTeamData: Record<string, CartTeamData>;
   confirmedEventIds: string[];
-  addToCart: (eventId: string, eventName?: string) => void;
+  addToCart: (eventId: string, eventName?: string, teamData?: CartTeamData) => void;
   removeFromCart: (eventId: string, eventName?: string) => void;
-  toggleCartItem: (eventId: string, eventName?: string) => void;
+  toggleCartItem: (eventId: string, eventName?: string, teamData?: CartTeamData) => void;
+  setEventTeamData: (eventId: string, teamData: CartTeamData) => void;
+  getEventTeamData: (eventId: string) => CartTeamData | undefined;
   clearCart: () => void;
   isInCart: (eventId: string) => boolean;
   isConfirmed: (eventId: string) => boolean;
@@ -30,10 +41,12 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'parinaam_registration_cart';
+const CART_TEAM_STORAGE_KEY = 'parinaam_registration_cart_team_data';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [cartItemIds, setCartItemIds] = useState<string[]>([]);
+  const [cartTeamData, setCartTeamData] = useState<Record<string, CartTeamData>>({});
   const [confirmedEventIds, setConfirmedEventIds] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -41,6 +54,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Key storage per user or guest
   const storageKey = user?.id ? `${CART_STORAGE_KEY}_${user.id}` : CART_STORAGE_KEY;
+  const teamStorageKey = user?.id ? `${CART_TEAM_STORAGE_KEY}_${user.id}` : CART_TEAM_STORAGE_KEY;
 
   // Fetch student confirmed registrations from RDS
   const refreshRegistrations = useCallback(async () => {
@@ -68,6 +82,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (user && user.role !== 'student') {
       setCartItemIds([]);
+      setCartTeamData({});
       setConfirmedEventIds([]);
       setIsLoaded(true);
       return;
@@ -79,6 +94,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setCartItemIds([]);
       }
+
+      const storedTeams = localStorage.getItem(teamStorageKey);
+      if (storedTeams) {
+        setCartTeamData(JSON.parse(storedTeams));
+      } else {
+        setCartTeamData({});
+      }
     } catch (e) {
       console.error('Failed to load cart from localStorage:', e);
     } finally {
@@ -86,7 +108,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     refreshRegistrations();
-  }, [storageKey, user, refreshRegistrations]);
+  }, [storageKey, teamStorageKey, user, refreshRegistrations]);
 
   // Auto-dismiss toast notification after 5 seconds
   useEffect(() => {
@@ -98,12 +120,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [toast]);
 
   // Sync to localStorage
-  const saveCart = (newIds: string[]) => {
+  const saveCart = (newIds: string[], newTeamData?: Record<string, CartTeamData>) => {
     setCartItemIds(newIds);
     try {
       localStorage.setItem(storageKey, JSON.stringify(newIds));
     } catch (e) {
       console.error('Failed to save cart to localStorage:', e);
+    }
+
+    if (newTeamData !== undefined) {
+      setCartTeamData(newTeamData);
+      try {
+        localStorage.setItem(teamStorageKey, JSON.stringify(newTeamData));
+      } catch (e) {
+        console.error('Failed to save cart team data to localStorage:', e);
+      }
     }
   };
 
@@ -115,26 +146,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const addToCart = (eventId: string, eventName?: string) => {
-    if (!eventId || cartItemIds.includes(eventId)) return;
-    saveCart([...cartItemIds, eventId]);
+  const addToCart = (eventId: string, eventName?: string, teamData?: CartTeamData) => {
+    if (!eventId) return;
+    const newIds = cartItemIds.includes(eventId) ? cartItemIds : [...cartItemIds, eventId];
+    const newTeamMap = { ...cartTeamData };
+    if (teamData) {
+      newTeamMap[eventId] = teamData;
+    }
+    saveCart(newIds, newTeamMap);
     showToast('This event is added to your cart. Check your cart!', eventName);
   };
 
   const removeFromCart = (eventId: string, eventName?: string) => {
-    saveCart(cartItemIds.filter(id => id !== eventId));
+    const newIds = cartItemIds.filter(id => id !== eventId);
+    const newTeamMap = { ...cartTeamData };
+    delete newTeamMap[eventId];
+    saveCart(newIds, newTeamMap);
   };
 
-  const toggleCartItem = (eventId: string, eventName?: string) => {
+  const setEventTeamData = (eventId: string, teamData: CartTeamData) => {
+    const newTeamMap = { ...cartTeamData, [eventId]: teamData };
+    setCartTeamData(newTeamMap);
+    try {
+      localStorage.setItem(teamStorageKey, JSON.stringify(newTeamMap));
+    } catch (e) {
+      console.error('Failed to save team data:', e);
+    }
+  };
+
+  const getEventTeamData = (eventId: string): CartTeamData | undefined => {
+    return cartTeamData[eventId];
+  };
+
+  const toggleCartItem = (eventId: string, eventName?: string, teamData?: CartTeamData) => {
     if (cartItemIds.includes(eventId)) {
       removeFromCart(eventId, eventName);
     } else {
-      addToCart(eventId, eventName);
+      addToCart(eventId, eventName, teamData);
     }
   };
 
   const clearCart = () => {
-    saveCart([]);
+    saveCart([], {});
   };
 
   const isInCart = (eventId: string): boolean => {
@@ -152,10 +205,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <CartContext.Provider
       value={{
         cartItemIds,
+        cartTeamData,
         confirmedEventIds,
         addToCart,
         removeFromCart,
         toggleCartItem,
+        setEventTeamData,
+        getEventTeamData,
         clearCart,
         isInCart,
         isConfirmed,
@@ -171,7 +227,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       {/* Toast Notification Popup when event added to cart */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[100] max-w-sm w-full bg-[#130924]/95 border border-fuchsia-500/60 rounded-2xl p-4 shadow-[0_0_40px_rgba(217,70,239,0.35)] backdrop-blur-xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-8 right-6 z-[99999] max-w-sm w-[calc(100vw-3rem)] sm:w-96 bg-[#0e071e] border-2 border-fuchsia-500/70 rounded-2xl p-4 shadow-[0_10px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(217,70,239,0.4)] backdrop-blur-2xl animate-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300 flex items-center justify-center shrink-0">
               <ShoppingBag size={20} className="animate-pulse" />

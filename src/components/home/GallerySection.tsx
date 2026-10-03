@@ -164,7 +164,7 @@ export const GallerySection = () => {
   const [selectedCluster, setSelectedCluster] = useState<string>('All');
 
   const clusters = [
-    { id: 'All', name: 'All Clubs (9)', icon: Sparkles },
+    { id: 'All', name: `All Clubs (${GALLERY_ITEMS.length})`, icon: Sparkles },
     { id: 'Tech & Innovation', name: 'Tech & Innovation', icon: Cpu },
     { id: 'Arts & Culture', name: 'Arts & Culture', icon: Palette },
     { id: 'Media & Play', name: 'Media & Play', icon: Film },
@@ -175,11 +175,41 @@ export const GallerySection = () => {
       ? GALLERY_ITEMS
       : GALLERY_ITEMS.filter((item) => item.cluster === selectedCluster);
 
+  // Lock body scroll and listen for ESC key when club modal is open
+  useEffect(() => {
+    if (activeItem) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setActiveItem(null);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [activeItem]);
+
   // When opening a club modal, reset slide index
   const handleOpenClub = (item: GalleryClubItem) => {
     setActiveItem(item);
     setModalSlideIdx(0);
   };
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    if (!activeItem) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeItem]);
 
   const getClusterColor = (cluster: string) => {
     switch (cluster) {
@@ -218,9 +248,9 @@ export const GallerySection = () => {
   const currentPhoto = currentPhotos[modalSlideIdx];
 
   return (
-    <section id="gallery" className="py-24 bg-[#070410] border-b border-purple-900/30 relative">
+    <section id="gallery" className="py-24 bg-[#070410] border-b border-purple-900/30 relative overflow-hidden w-full max-w-full">
       {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-900/10 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 sm:w-96 lg:w-[700px] h-64 sm:h-96 lg:h-[350px] bg-purple-900/10 blur-[100px] sm:blur-[120px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10">
         {/* Section Header */}
@@ -234,7 +264,7 @@ export const GallerySection = () => {
               Life at Amrita — Our Clubs
             </h2>
             <p className="text-sm sm:text-base text-slate-400 max-w-2xl font-sans leading-relaxed">
-              Meet the 9 university clubs across <strong className="text-slate-200">Tech &amp; Innovation</strong>,{' '}
+              Meet the {GALLERY_ITEMS.length} university clubs across <strong className="text-slate-200">Tech &amp; Innovation</strong>,{' '}
               <strong className="text-slate-200">Arts &amp; Culture</strong>, and{' '}
               <strong className="text-slate-200">Media &amp; Play</strong> that organized flagship events, hackathons, and concerts.
             </p>
@@ -243,7 +273,7 @@ export const GallerySection = () => {
           {/* Quick Info Box */}
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-mono text-slate-400 hidden sm:block shrink-0">
             <span className="block text-[10px] uppercase text-purple-400">Festival Hub</span>
-            <span className="text-white font-bold">3 Clusters • 9 Leading Clubs</span>
+            <span className="text-white font-bold">3 Clusters • {GALLERY_ITEMS.length} Leading Clubs</span>
           </div>
         </div>
 
@@ -288,23 +318,29 @@ export const GallerySection = () => {
 
         {/* Modal Lightbox Preview with Full Interactive Slideshow */}
         {activeItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="relative max-w-3xl w-full bg-[#0d091a] border border-purple-700/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+          <div
+            onClick={() => setActiveItem(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-[#030108]/95 backdrop-blur-2xl animate-in fade-in duration-200 overflow-y-auto overscroll-contain"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-3xl w-full bg-[#0d091a] border-2 border-purple-500/40 rounded-3xl overflow-hidden shadow-[0_0_90px_rgba(0,0,0,0.95)] flex flex-col max-h-[90vh] overscroll-contain my-auto"
+            >
               {/* Close Button */}
               <button
                 onClick={() => setActiveItem(null)}
-                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/75 text-slate-300 hover:text-white border border-white/15 flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/85 text-slate-300 hover:text-white border border-white/20 flex items-center justify-center transition-colors shadow-lg"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
 
               {/* Main Media Viewer Area */}
-              <div className="relative bg-[#070410] border-b border-purple-950 flex flex-col">
-                <div className="h-72 sm:h-96 w-full relative flex items-center justify-center overflow-hidden">
+              <div className="relative bg-[#070410] border-b border-purple-950 flex flex-col shrink-0">
+                <div className="h-64 sm:h-96 w-full relative flex items-center justify-center overflow-hidden bg-black">
                   {currentPhoto ? (
                     // Display Current Photo in Slideshow
-                    <div className="relative w-full h-full flex items-center justify-center bg-black/60">
+                    <div className="relative w-full h-full flex items-center justify-center bg-black">
                       <img
                         key={currentPhoto.url}
                         src={currentPhoto.url}
@@ -321,7 +357,7 @@ export const GallerySection = () => {
                                 prev === 0 ? currentPhotos.length - 1 : prev - 1
                               )
                             }
-                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-purple-600 text-white border border-white/15 transition-all shadow-xl z-20"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/80 hover:bg-purple-600 text-white border border-white/20 transition-all shadow-2xl z-20"
                             aria-label="Previous Slide"
                           >
                             <ChevronLeft size={18} />
@@ -332,21 +368,33 @@ export const GallerySection = () => {
                                 (prev + 1) % currentPhotos.length
                               )
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-purple-600 text-white border border-white/15 transition-all shadow-xl z-20"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/80 hover:bg-purple-600 text-white border border-white/20 transition-all shadow-2xl z-20"
                             aria-label="Next Slide"
                           >
                             <ChevronRight size={18} />
                           </button>
                         </>
                       )}
+
+                      {/* Photo Caption Overlay */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6 pointer-events-none z-10 flex flex-col justify-end">
+                        <p className="text-xs font-mono font-bold text-white tracking-wide">
+                          {currentPhoto.title}
+                        </p>
+                        {currentPhoto.caption && (
+                          <p className="text-[11px] text-slate-300 line-clamp-2 font-sans">
+                            {currentPhoto.caption}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     // Display Official Logo Banner
-                    <div className="relative w-full h-full flex items-center justify-center bg-[#0b0718]">
+                    <div className="relative w-full h-full flex items-center justify-center bg-[#070410]">
                       <img
                         src={activeItem.imageUrl}
                         alt={activeItem.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain p-2"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0d091a] via-transparent to-transparent pointer-events-none" />
                     </div>
@@ -354,10 +402,10 @@ export const GallerySection = () => {
 
                   {/* Top Badges */}
                   <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-purple-600 text-white shadow-sm">
+                    <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-purple-600 text-white shadow-md">
                       {activeItem.cluster}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-300 bg-black/80 px-2 py-0.5 rounded-md border border-white/10">
+                    <span className="text-[10px] font-mono text-slate-300 bg-black/90 px-2 py-0.5 rounded-md border border-white/15 shadow">
                       {activeItem.category}
                     </span>
                   </div>
@@ -365,7 +413,7 @@ export const GallerySection = () => {
 
                 {/* Thumbnail Strip for Slideshow */}
                 {currentPhotos.length > 1 && (
-                  <div className="flex items-center gap-2 p-3 bg-black/70 overflow-x-auto border-t border-purple-950/60 scrollbar-none">
+                  <div className="flex items-center gap-2 p-3 bg-black/90 overflow-x-auto border-t border-purple-950/80 scrollbar-none">
                     {currentPhotos.map((photo, idx) => (
                       <button
                         key={idx}
@@ -388,14 +436,14 @@ export const GallerySection = () => {
               </div>
 
               {/* Modal Description & Events Body */}
-              <div className="p-6 space-y-5 overflow-y-auto flex-1 font-sans">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1 font-sans overscroll-contain bg-[#0d091a]">
                 {/* Header */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
                       {activeItem.name}
                     </h3>
-                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1 font-bold">
+                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/90 px-2 py-0.5 rounded-md border border-emerald-500/40 flex items-center gap-1 font-bold">
                       <CheckCircle2 size={10} />
                       Verified Club
                     </span>
@@ -453,7 +501,7 @@ export const GallerySection = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 bg-black/60 border-t border-purple-950 flex items-center justify-between gap-3 shrink-0">
+              <div className="p-4 bg-[#080512] border-t border-purple-950 flex items-center justify-between gap-3 shrink-0">
                 <button
                   onClick={() => setActiveItem(null)}
                   className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono transition-colors"
