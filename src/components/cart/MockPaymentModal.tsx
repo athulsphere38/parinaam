@@ -45,8 +45,6 @@ export const MockPaymentModal: React.FC<MockPaymentModalProps> = ({
   const [processing, setProcessing] = useState(false);
   const [simulatedSuccess, setSimulatedSuccess] = useState(false);
 
-  if (!isOpen) return null;
-
   // Close modal on Escape key press
   useEffect(() => {
     if (!isOpen) return;
@@ -58,6 +56,8 @@ export const MockPaymentModal: React.FC<MockPaymentModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   const handleSimulatePayment = async () => {
     setProcessing(true);

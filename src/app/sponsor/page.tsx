@@ -114,7 +114,7 @@ export default function SponsorRegistrationPage() {
 
   const [formError, setFormError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
@@ -123,15 +123,35 @@ export default function SponsorRegistrationPage() {
       return;
     }
 
+    if (!formData.companyName.trim() || !formData.contactPerson.trim() || !formData.phone.trim()) {
+      setFormError('Please fill in all required contact & organization fields.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const generatedId = `PAR-SPON-${Math.floor(100000 + Math.random() * 900000)}`;
-      setSubmissionId(generatedId);
+    try {
+      const res = await fetch('/api/sponsors/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        setSubmissionId(data.data.application_id);
+        setIsSubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setFormError(data.error || 'Failed to submit sponsor application. Please try again.');
+      }
+    } catch (err) {
+      console.error('Sponsor form submit error:', err);
+      setFormError('A network error occurred. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 600);
+    }
   };
 
   const resetForm = () => {
