@@ -28,7 +28,7 @@ export const Footer = () => {
               </span>
             </div>
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              {FEST_CONFIG.subtitle}. Experience three days of intense competitive coding, robotics combat, battle of bands, hackathons, and cultural celebrations.
+              {FEST_CONFIG.subtitle}. Amrita Amaravati's annual techno-cultural fest. Two days of hackathons, robowars, stage events, music, and sports.
             </p>
             <div className="flex items-center gap-2 pt-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
@@ -37,7 +37,7 @@ export const Footer = () => {
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Verified Fest Portal</span>
+                <span>Amrita Amaravati</span>
               </div>
             </div>
           </div>
@@ -50,12 +50,12 @@ export const Footer = () => {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/events" className="hover:text-white transition-colors">
-                  All Events & Competitions
+                  All Events
                 </Link>
               </li>
               <li>
                 <Link href="/schedule" className="hover:text-white transition-colors">
-                  Fest Schedule & Timeline
+                  Schedule
                 </Link>
               </li>
               <li>
@@ -65,7 +65,7 @@ export const Footer = () => {
               </li>
               <li>
                 <Link href="/dashboard" className="hover:text-white transition-colors">
-                  Participant Portal
+                  My Dashboard
                 </Link>
               </li>
             </ul>
@@ -74,7 +74,7 @@ export const Footer = () => {
           {/* Featured Club Events / Clusters */}
           <div>
             <h4 className="font-display font-bold text-white text-sm uppercase tracking-wider mb-4">
-              Event Clusters
+              Popular Events
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -149,7 +149,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+                {/* Bottom Bar */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-4">
             <span>© 2026 {FEST_CONFIG.name} Fest Team. All rights reserved.</span>
@@ -165,7 +165,7 @@ export const Footer = () => {
               Festival Guidelines
             </a>
             <span className="text-slate-400">
-              Built with 💜 by <span className="text-white font-medium">Chakravyuha Technical Club Amrita Amaravati</span>
+              Built by Chakravyuha Club • Amrita Amaravati
             </span>
           </div>
         </div>
