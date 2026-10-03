@@ -173,12 +173,12 @@ export default function SponsorRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05030a] text-slate-100 fest-grid-bg pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#05030a] text-slate-100 fest-grid-bg pt-28 sm:pt-36 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden w-full max-w-full font-sans">
 
       {/* Ambient Theme Glows */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-purple-600/15 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-1/2 right-10 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-20 left-10 w-[400px] h-[400px] bg-purple-900/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 sm:w-96 lg:w-[700px] h-64 sm:h-96 lg:h-[450px] bg-purple-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 right-10 w-64 sm:w-96 lg:w-[500px] h-64 sm:h-96 lg:h-[500px] bg-fuchsia-600/10 rounded-full blur-[100px] sm:blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-20 left-10 w-48 sm:w-80 lg:w-[400px] h-48 sm:h-80 lg:h-[400px] bg-purple-900/15 rounded-full blur-[90px] sm:blur-[140px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-12 relative z-10">
 

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import './globals.css';
 import { FestProvider } from '../context/FestContext';
@@ -8,6 +8,12 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { ProfileCompletionModal } from '../components/layout/ProfileCompletionModal';
 import { CustomCursor } from '../components/ui/CustomCursor';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: 'PARINAAM 2026 | Amrita Vishwa Vidyapeetham, Amaravati',
@@ -21,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark w-full max-w-full overflow-x-hidden" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -32,7 +38,7 @@ export default function RootLayout({
         <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
       </head>
       <body
-        className="min-h-screen bg-[#05030a] text-slate-100 antialiased flex flex-col justify-between selection:bg-purple-600 selection:text-white"
+        className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#05030a] text-slate-100 antialiased flex flex-col justify-between selection:bg-purple-600 selection:text-white"
         suppressHydrationWarning
       >
         <CustomCursor />
@@ -41,7 +47,7 @@ export default function RootLayout({
             <FestProvider>
               <Navbar />
               <ProfileCompletionModal />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
               <Footer />
             </FestProvider>
           </CartProvider>

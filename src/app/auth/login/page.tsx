@@ -58,10 +58,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#05030a] relative overflow-hidden w-full max-w-full">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 lg:w-[600px] h-64 sm:h-96 lg:h-[600px] bg-purple-600/10 rounded-full blur-[90px] sm:blur-[120px]" />
       </div>
 
       <motion.div

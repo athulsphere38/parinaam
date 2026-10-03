@@ -7,6 +7,12 @@
     border-color: var(--border, #231435);
   }
   
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   html {
     scroll-behavior: smooth;
     color-scheme: dark;
@@ -16,7 +22,6 @@
     background-color: var(--background, #05030a);
     color: var(--foreground, #f1f5f9);
     font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
