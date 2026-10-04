@@ -1,13 +1,20 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required to run seed.js');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:Parinaam2026DbSecurePass!@parinaam-db.cf4m6qqscmjp.eu-north-1.rds.amazonaws.com:5432/parinaam',
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
 async function seed() {
-  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Super@8472';
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminPassword) {
+    throw new Error('ADMIN_SEED_PASSWORD environment variable is required to run seed.js');
+  }
   const hash = await bcrypt.hash(adminPassword, 10);
   
   // 1. Seed Super Admin

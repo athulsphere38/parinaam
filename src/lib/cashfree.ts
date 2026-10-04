@@ -25,8 +25,7 @@ export class CashfreeError extends Error {
 export function getCashfreeConfig(): CashfreeConfig {
   const appId =
     process.env.CASHFREE_APP_ID?.trim() ||
-    process.env.NEXT_PUBLIC_CASHFREE_APP_ID?.trim() ||
-    '1454372309defa4f81be166e22e2734541';
+    process.env.NEXT_PUBLIC_CASHFREE_APP_ID?.trim() || '';
   const secretKey =
     process.env.CASHFREE_SECRET_KEY?.trim() || '';
 

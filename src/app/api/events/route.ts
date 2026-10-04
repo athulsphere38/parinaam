@@ -13,8 +13,10 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const status = searchParams.get('status') || 'published';
     const search = searchParams.get('search');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const rawPage = parseInt(searchParams.get('page') || '1');
+    const rawLimit = parseInt(searchParams.get('limit') || '20');
+    const page = Math.max(isNaN(rawPage) ? 1 : rawPage, 1);
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 100);
     const offset = (page - 1) * limit;
 
     // 'all' is a special value meaning no status filter (used by organizer dashboard)
@@ -209,6 +211,20 @@ export async function POST(req: NextRequest) {
     const parsedRules = JSON.stringify(Array.isArray(rules) ? rules : []);
     const parsedRounds = JSON.stringify(Array.isArray(rounds) ? rounds : []);
     const parsedCoordinators = JSON.stringify(Array.isArray(coordinators) ? coordinators : []);
+
+    const isValidUrl = (urlStr?: string | null) => {
+      if (!urlStr || !urlStr.trim()) return true;
+      try {
+        const u = new URL(urlStr.trim());
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    };
+
+    if (!isValidUrl(poster_url) || !isValidUrl(rulebook_url) || !isValidUrl(unstop_url) || !isValidUrl(registration_url)) {
+      return error('URLs must use http:// or https:// schemes only', 400);
+    }
 
     const effectiveUnstopUrl = (unstop_url || registration_url || '').trim() || null;
     const effectiveRegUrl = (registration_url || unstop_url || '').trim() || null;

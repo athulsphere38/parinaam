@@ -4,15 +4,21 @@ import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 
 function getSecret() {
-  return new TextEncoder().encode(
-    process.env.JWT_SECRET || 'parinaam-2026-super-secret-key-change-in-production'
-  );
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('[SECURITY FATAL] JWT_SECRET environment variable is missing.');
+  }
+  return new TextEncoder().encode(secret);
 }
 
 function getAesKey() {
+  const secret = process.env.REG_TOKEN_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('[SECURITY FATAL] JWT_SECRET or REG_TOKEN_SECRET environment variable is missing.');
+  }
   return crypto
     .createHash('sha256')
-    .update(process.env.JWT_SECRET || 'parinaam-2026-super-secret-key-change-in-production')
+    .update(secret)
     .digest();
 }
 

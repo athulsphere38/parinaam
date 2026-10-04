@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
       [emailLower]
     );
 
+    const DUMMY_HASH = '$2a$10$e0MYzXyjpJS7Pd0RVvHwHe1FX.f/v9.a/4a1yJ5Z1A7.B1C2D3E4F';
     if (result.rows.length === 0) {
+      await bcrypt.compare(password, DUMMY_HASH);
       return error('Invalid email or password', 401);
     }
 

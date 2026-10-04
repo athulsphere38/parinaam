@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './src/lib/auth';
 
-const PROTECTED_ROUTES = ['/dashboard', '/organizer', '/admin'];
+const PROTECTED_ROUTES = ['/dashboard', '/organizer', '/admin', '/superadmin'];
 const AUTH_ROUTES = ['/auth/login', '/auth/register'];
 const ROLE_ROUTES: Record<string, string[]> = {
-  '/admin': ['super_admin'],
+  '/admin': ['super_admin', 'club_admin'],
+  '/superadmin': ['super_admin'],
   '/organizer': ['club_admin', 'super_admin'],
 };
 
@@ -20,7 +21,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   if (isAuthRoute && user) {
-    const dest = user.role === 'super_admin' ? '/admin' : user.role === 'club_admin' ? '/organizer' : '/dashboard';
+    const dest = user.role === 'super_admin' ? '/superadmin' : user.role === 'club_admin' ? '/admin' : '/dashboard';
     return NextResponse.redirect(new URL(dest, req.url));
   }
 
@@ -42,5 +43,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/organizer/:path*', '/admin/:path*', '/auth/:path*'],
+  matcher: ['/dashboard/:path*', '/organizer/:path*', '/admin/:path*', '/superadmin/:path*', '/auth/:path*'],
 };
