@@ -55,18 +55,13 @@ export async function POST(req: NextRequest) {
     if (effectiveOrderId) {
       try {
         const cfResult = await verifyCashfreePayment(effectiveOrderId);
-        if (cfResult.isPaid || (cfResult.order && (cfResult.order.order_status === 'PAID' || cfResult.order.order_status === 'ACTIVE'))) {
+        if (cfResult.isPaid || (cfResult.order && cfResult.order.order_status === 'PAID')) {
           isPaymentValid = true;
           cfPaymentDetails = cfResult.payment || cfResult.order;
         }
       } catch (e: any) {
         console.warn('[Cashfree Verify Warning]', e.message);
       }
-    }
-
-    // Development fallback
-    if (!isPaymentValid && (process.env.NODE_ENV === 'development' || process.env.CASHFREE_MODE === 'sandbox')) {
-      isPaymentValid = true;
     }
 
     if (!isPaymentValid) {

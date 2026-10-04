@@ -19,6 +19,17 @@ export async function GET(
     if (session.role !== 'super_admin' && session.role !== 'club_admin') {
       return forbidden('Administrative privileges required');
     }
+    if (session.role === 'club_admin' && session.clubId) {
+      const accessCheck = await db.query(
+        `SELECT 1 FROM registrations r
+         JOIN events e ON r.event_id = e.id
+         WHERE r.user_id = $1 AND e.club_id = $2 LIMIT 1`,
+        [id, session.clubId]
+      );
+      if (accessCheck.rows.length === 0) {
+        return forbidden('Access denied. This user has no registrations in your club.');
+      }
+    }
 
     // 1. Fetch user full profile
     const userResult = await db.query(

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
       `SELECT u.id, u.full_name, u.email, u.phone, u.college_name, u.department,
               u.year_of_study, u.verification_status, u.pass_type, u.qr_token, u.created_at
        FROM users u
-       WHERE u.qr_token = $1 OR u.id::text = $1`,
+       WHERE u.qr_token = $1`,
       [token]
     );
 

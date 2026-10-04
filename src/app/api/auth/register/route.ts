@@ -69,16 +69,13 @@ export async function POST(req: NextRequest) {
 
     const isAmritaStudent = student_type === 'amrita' || (student_type !== 'other' && isAmritaDomain);
 
-    // Check if email already exists as a verified user
+    // Check if email already exists
     const existing = await db.query(
       'SELECT id, email, platform_fee_paid, verification_status FROM users WHERE email = $1',
       [emailLower]
     );
     if (existing.rows.length > 0) {
-      const existingUser = existing.rows[0];
-      if (existingUser.verification_status === 'verified' || existingUser.platform_fee_paid) {
-        return error('An account with this email already exists. Please log in.', 409);
-      }
+      return error('An account with this email address already exists. Please log in.', 409);
     }
 
     const cleanPhone = (phone || '').replace(/\D/g, '').slice(0, 10);
@@ -151,7 +148,6 @@ export async function POST(req: NextRequest) {
         email_verify_token, email_verified, platform_fee_paid, id_card_url, pass_type
       ) VALUES ($1,$2,$3,$4,$5,FALSE,$6,$7,$8,$9,'pending',$10,$11,TRUE,FALSE,$12,'DELEGATE_PASS_1000')
       ON CONFLICT (email) DO UPDATE SET
-        password_hash = EXCLUDED.password_hash,
         full_name = EXCLUDED.full_name,
         phone = EXCLUDED.phone,
         college_name = EXCLUDED.college_name,
