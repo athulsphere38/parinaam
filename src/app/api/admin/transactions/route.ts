@@ -4,8 +4,9 @@ import { getSessionUser } from '@/lib/auth';
 import { success, error, unauthorized, forbidden, serverError } from '@/lib/apiResponse';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-// GET /api/admin/transactions — Super Admin Transaction Logs with search, filters, and server-side pagination
+// GET /api/admin/transactions — Super Admin Transaction Logs with Cashfree details, rich itemization & filters
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionUser(req);
@@ -18,7 +19,9 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')?.trim();
     const status = searchParams.get('status')?.trim(); // 'paid' | 'created' | 'failed' | 'refunded'
     const type = searchParams.get('type')?.trim(); // 'platform_fee' | 'event_fee'
+    const studentType = searchParams.get('student_type')?.trim(); // 'amrita' | 'other'
     const eventId = searchParams.get('event_id')?.trim();
+    const clubId = searchParams.get('club_id')?.trim();
     const dateFrom = searchParams.get('date_from')?.trim();
     const dateTo = searchParams.get('date_to')?.trim();
     const sortBy = searchParams.get('sort_by') === 'amount' ? 'p.amount' : 'p.created_at';
@@ -43,9 +46,26 @@ export async function GET(req: NextRequest) {
       paramIdx++;
     }
 
+    if (studentType === 'amrita') {
+      whereClause += ` AND u.is_amrita_student = true`;
+    } else if (studentType === 'other') {
+      whereClause += ` AND (u.is_amrita_student = false OR u.is_amrita_student IS NULL)`;
+    }
+
     if (eventId) {
       whereClause += ` AND p.id IN (SELECT DISTINCT payment_id FROM registrations WHERE event_id = $${paramIdx})`;
       params.push(eventId);
+      paramIdx++;
+    }
+
+    if (clubId) {
+      whereClause += ` AND p.id IN (
+        SELECT DISTINCT r.payment_id 
+        FROM registrations r 
+        JOIN events e ON r.event_id = e.id 
+        WHERE e.club_id = $${paramIdx}
+      )`;
+      params.push(clubId);
       paramIdx++;
     }
 
@@ -66,6 +86,10 @@ export async function GET(req: NextRequest) {
         u.full_name ILIKE $${paramIdx} OR 
         u.email ILIKE $${paramIdx} OR 
         u.phone ILIKE $${paramIdx} OR 
+        u.college_name ILIKE $${paramIdx} OR 
+        u.roll_number ILIKE $${paramIdx} OR 
+        p.cf_order_id ILIKE $${paramIdx} OR 
+        p.cf_payment_id ILIKE $${paramIdx} OR 
         p.razorpay_order_id ILIKE $${paramIdx} OR 
         p.razorpay_payment_id ILIKE $${paramIdx} OR 
         p.id::text ILIKE $${paramIdx}
@@ -74,16 +98,20 @@ export async function GET(req: NextRequest) {
       paramIdx++;
     }
 
-    // Fetch transactions with joined user profile
+    // Fetch transactions with joined user profile and Cashfree fields
     const query = `
       SELECT 
         p.id as payment_id,
         p.user_id,
         p.type,
         p.amount as amount_paise,
+        p.cf_order_id,
+        p.cf_payment_id,
+        p.payment_session_id,
         p.razorpay_order_id,
         p.razorpay_payment_id,
         p.status as payment_status,
+        p.metadata,
         p.created_at,
         p.updated_at,
         u.full_name as user_name,
@@ -93,7 +121,11 @@ export async function GET(req: NextRequest) {
         u.is_amrita_student,
         u.roll_number as user_roll_number,
         u.department as user_department,
-        u.year_of_study as user_year
+        u.year_of_study as user_year,
+        u.city as user_city,
+        u.verification_status,
+        u.pass_type,
+        u.qr_token
       FROM payments p
       LEFT JOIN users u ON p.user_id = u.id
       ${whereClause}
@@ -117,7 +149,9 @@ export async function GET(req: NextRequest) {
         COUNT(*) FILTER (WHERE p.status = 'refunded') as refunded_count,
         COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid'), 0) as total_paid_paise,
         COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid' AND p.type = 'platform_fee'), 0) as platform_paid_paise,
-        COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid' AND p.type = 'event_fee'), 0) as event_paid_paise
+        COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid' AND p.type = 'event_fee'), 0) as event_paid_paise,
+        COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid' AND (u.is_amrita_student = false OR u.is_amrita_student IS NULL)), 0) as outsider_paid_paise,
+        COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'paid' AND u.is_amrita_student = true), 0) as amrita_paid_paise
       FROM payments p
       LEFT JOIN users u ON p.user_id = u.id
       ${whereClause}
@@ -141,13 +175,20 @@ export async function GET(req: NextRequest) {
           r.payment_id,
           r.status as registration_status,
           r.payment_status,
-          r.amount_paid,
+          COALESCE(r.amount_paid, 0) as amount_paid,
+          r.team_name,
+          r.team_members,
           r.registered_at,
           r.confirmed_at,
           e.id as event_id,
           e.name as event_name,
+          e.event_code,
+          e.category,
+          e.venue,
+          e.fee as event_fee,
           c.id as club_id,
           c.name as club_name,
+          c.slug as club_slug,
           c.color as club_color
          FROM registrations r
          JOIN events e ON r.event_id = e.id
@@ -167,6 +208,57 @@ export async function GET(req: NextRequest) {
 
     const formattedPayments = rawPayments.map(p => {
       const amountPaise = Number(p.amount_paise || 0);
+      const amountInr = Math.round(amountPaise / 100);
+      const linkedRegs = registrationsByPayment[p.payment_id] || [];
+
+      // Determine human-readable "Paid For" description and itemization
+      let itemDescription = '';
+      let purchasedItems: Array<{
+        name: string;
+        type: string;
+        amount_inr: number;
+        club_name?: string;
+        club_color?: string;
+        category?: string;
+        event_code?: string;
+        team_name?: string | null;
+      }> = [];
+
+      if (p.type === 'platform_fee') {
+        itemDescription = 'PARINAAM 2026 Official Festival Pass (₹1000 Fixed Entry)';
+        purchasedItems.push({
+          name: 'Official Festival Pass (Delegate Pass)',
+          type: 'Delegate Pass',
+          amount_inr: amountInr,
+          category: 'Festival Pass',
+        });
+      } else if (linkedRegs.length > 0) {
+        if (linkedRegs.length === 1) {
+          const r = linkedRegs[0];
+          itemDescription = `Event: ${r.event_name} (${r.club_name})`;
+        } else {
+          itemDescription = `Multi-Event Registration (${linkedRegs.length} Events: ${linkedRegs.map(r => r.event_name).join(', ')})`;
+        }
+
+        purchasedItems = linkedRegs.map(r => ({
+          name: r.event_name,
+          type: 'Event Registration',
+          amount_inr: Number(r.amount_paid) || 0,
+          club_name: r.club_name,
+          club_color: r.club_color,
+          category: r.category,
+          event_code: r.event_code,
+          team_name: r.team_name,
+        }));
+      } else {
+        itemDescription = p.type === 'event_fee' ? 'Event Registration Ticket' : 'Festival Entry Pass';
+        purchasedItems.push({
+          name: itemDescription,
+          type: p.type,
+          amount_inr: amountInr,
+        });
+      }
+
       return {
         id: p.payment_id,
         user_id: p.user_id,
@@ -179,17 +271,25 @@ export async function GET(req: NextRequest) {
           roll_number: p.user_roll_number || null,
           department: p.user_department || null,
           year_of_study: p.user_year || null,
+          city: p.user_city || null,
+          verification_status: p.verification_status || 'verified',
+          pass_type: p.pass_type || (p.is_amrita_student ? 'AMRITA_FREE' : 'DELEGATE_PASS_1000'),
+          qr_token: p.qr_token || null,
         },
         type: p.type, // 'platform_fee' | 'event_fee'
+        gateway: 'Cashfree Payments',
         amount_paise: amountPaise,
-        amount_inr: Math.round(amountPaise / 100),
+        amount_inr: amountInr,
         currency: 'INR',
-        razorpay_order_id: p.razorpay_order_id || null,
-        razorpay_payment_id: p.razorpay_payment_id || null,
+        cf_order_id: p.cf_order_id || p.razorpay_order_id || null,
+        cf_payment_id: p.cf_payment_id || p.razorpay_payment_id || null,
+        payment_session_id: p.payment_session_id || null,
         status: p.payment_status, // 'created' | 'paid' | 'failed' | 'refunded'
+        item_description: itemDescription,
+        purchased_items: purchasedItems,
         created_at: p.created_at,
         updated_at: p.updated_at,
-        registrations: registrationsByPayment[p.payment_id] || [],
+        registrations: linkedRegs,
       };
     });
 
@@ -199,6 +299,8 @@ export async function GET(req: NextRequest) {
     const totalPaidPaise = Number(summaryRow.total_paid_paise || 0);
     const platformPaidPaise = Number(summaryRow.platform_paid_paise || 0);
     const eventPaidPaise = Number(summaryRow.event_paid_paise || 0);
+    const outsiderPaidPaise = Number(summaryRow.outsider_paid_paise || 0);
+    const amritaPaidPaise = Number(summaryRow.amrita_paid_paise || 0);
 
     return success({
       transactions: formattedPayments,
@@ -211,6 +313,8 @@ export async function GET(req: NextRequest) {
         total_paid_inr: Math.round(totalPaidPaise / 100),
         platform_paid_inr: Math.round(platformPaidPaise / 100),
         event_paid_inr: Math.round(eventPaidPaise / 100),
+        outsider_paid_inr: Math.round(outsiderPaidPaise / 100),
+        amrita_paid_inr: Math.round(amritaPaidPaise / 100),
       },
       pagination: {
         total: totalRecords,

@@ -23,6 +23,10 @@ interface Overview {
   confirmed_registrations: number;
   total_checkins: number;
   total_revenue_inr: number;
+  platform_revenue_inr?: number;
+  event_revenue_inr?: number;
+  outsider_revenue_inr?: number;
+  amrita_revenue_inr?: number;
 }
 
 export interface ClubEventReport {
@@ -160,7 +164,6 @@ export default function SuperAdminDashboard() {
   const [inspectingUserId, setInspectingUserId] = useState<string | null>(null);
   const [inspectingData, setInspectingData] = useState<any | null>(null);
   const [inspectingLoading, setInspectingLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   // Live feed pagination & filter
   const [feedType, setFeedType] = useState<'users' | 'events'>('users');
@@ -258,15 +261,8 @@ export default function SuperAdminDashboard() {
     loadData();
   }, [user]);
 
-  const handleVerify = async (userId: string, status: 'verified' | 'rejected', note?: string) => {
-    await fetch(`/api/admin/users/${userId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, note }),
-    });
-    setPendingUsers(prev => prev.filter(u => u.id !== userId));
-    loadData();
-  };
+  // Note: Pass is automatically granted on successful Cashfree payment verification.
+  // Manual approve/reject has been removed. KYC tab now shows ID cards for info only.
 
   if (!user) return null;
 
@@ -357,20 +353,20 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
-        {/* Pending verification alert */}
+        {/* Pending verification info — pass is auto-granted on Cashfree payment */}
         {overview && overview.pending_verification > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3.5 cursor-pointer hover:bg-amber-500/15 transition-colors"
+            className="mb-6 flex items-center gap-3 bg-blue-500/10 border border-blue-500/30 rounded-2xl px-5 py-3.5 cursor-pointer hover:bg-blue-500/15 transition-colors"
             onClick={() => setTab('verify')}
           >
-            <AlertTriangle size={18} className="text-amber-400 shrink-0" />
-            <p className="text-amber-300 text-sm">
-              <strong>{overview.pending_verification}</strong> external student{overview.pending_verification !== 1 ? 's' : ''} awaiting ID card review for ticket access
+            <IdCard size={18} className="text-blue-400 shrink-0" />
+            <p className="text-blue-300 text-sm">
+              <strong>{overview.pending_verification}</strong> external student{overview.pending_verification !== 1 ? 's' : ''} have uploaded ID cards — passes are auto-granted on payment verification
             </p>
-            <span className="text-xs text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full font-semibold ml-auto flex items-center gap-1">
-              Review Queue ({pendingUsers.length}) →
+            <span className="text-xs text-blue-400 bg-blue-500/20 px-3 py-1 rounded-full font-semibold ml-auto flex items-center gap-1">
+              View ID Cards ({pendingUsers.length}) →
             </span>
           </motion.div>
         )}
@@ -381,7 +377,7 @@ export default function SuperAdminDashboard() {
             { id: 'overview', label: 'Command Overview' },
             { id: 'analytics', label: 'Branch & Year Analytics' },
             { id: 'clubs', label: `12 Club Portals (${clubs.length})` },
-            { id: 'verify', label: `KYC Review Queue (${pendingUsers.length})` },
+            { id: 'verify', label: `ID Card Uploads (${pendingUsers.length})` },
             { id: 'broadcast', label: 'Ticker & Broadcasts' },
           ].map(t => (
             <button
@@ -416,12 +412,12 @@ export default function SuperAdminDashboard() {
             {/* Primary KPI Ribbon */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
-                { label: 'Total Students', value: overview?.total_students ?? '—', sub: 'All Registered', color: 'text-purple-400', href: '/superadmin/users' },
-                { label: 'Amrita Amaravati', value: overview?.amrita_students ?? '—', sub: 'Free Passes', color: 'text-fuchsia-400', href: '/superadmin/users' },
-                { label: 'External Students', value: overview?.external_students ?? '—', sub: 'National Reach', color: 'text-cyan-400', href: '/superadmin/users' },
+                { label: 'Total Fest Revenue', value: `₹${(overview?.total_revenue_inr ?? 0).toLocaleString('en-IN')}`, sub: 'Cashfree Gateway', color: 'text-amber-400', href: '/superadmin/transactions' },
+                { label: 'Outsider Revenue', value: `₹${(overview?.outsider_revenue_inr ?? overview?.platform_revenue_inr ?? 0).toLocaleString('en-IN')}`, sub: 'Passes + Events', color: 'text-cyan-400', href: '/superadmin/transactions' },
+                { label: 'Amrita Revenue', value: `₹${(overview?.amrita_revenue_inr ?? 0).toLocaleString('en-IN')}`, sub: 'Event Fees', color: 'text-purple-300', href: '/superadmin/transactions' },
+                { label: 'Total Students', value: overview?.total_students ?? '—', sub: 'All Registered', color: 'text-fuchsia-400', href: '/superadmin/users' },
                 { label: 'Active Events', value: overview?.total_events ?? '—', sub: 'Across 12 Clubs', color: 'text-blue-400', href: '/events' },
                 { label: 'Gate Check-ins', value: overview?.total_checkins ?? '—', sub: 'QR Scans Done', color: 'text-emerald-400', href: '/superadmin/scan' },
-                { label: 'Total Revenue', value: `₹${overview?.total_revenue_inr ?? 0}`, sub: 'Transaction Logs', color: 'text-amber-400', href: '/superadmin/transactions' },
               ].map(kpi => (
                 <Link key={kpi.label} href={kpi.href} className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-2xl p-4 transition-all block">
                   <p className="text-slate-400 text-xs font-medium">{kpi.label}</p>
@@ -1151,9 +1147,21 @@ export default function SuperAdminDashboard() {
           </div>
         )}
 
-        {/* TAB 4: KYC QUEUE */}
+        {/* TAB 4: ID CARD UPLOADS — read-only viewer, pass is auto-granted on Cashfree payment */}
         {tab === 'verify' && (
           <div className="space-y-4">
+            {/* Info Banner */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+              <CheckCircle size={18} className="text-blue-400 shrink-0" />
+              <div>
+                <p className="text-blue-200 text-sm font-semibold">Automatic Pass Generation Active</p>
+                <p className="text-blue-400/80 text-xs mt-0.5">
+                  Passes are automatically generated when Cashfree payment is successfully verified. No manual approval needed.
+                  This tab shows uploaded ID cards for reference only.
+                </p>
+              </div>
+            </div>
+
             {/* Search & Filter Header Bar */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="relative w-full sm:max-w-md">
@@ -1184,7 +1192,7 @@ export default function SuperAdminDashboard() {
               <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end text-xs text-slate-400">
                 <span className="font-mono">
                   Showing <strong className="text-white">{filteredPendingUsers.length}</strong> of{' '}
-                  <strong className="text-purple-300">{pendingUsers.length}</strong> pending
+                  <strong className="text-purple-300">{pendingUsers.length}</strong> uploaded
                 </span>
                 {kycSearchQuery && (
                   <button
@@ -1203,15 +1211,15 @@ export default function SuperAdminDashboard() {
             {pendingUsers.length === 0 ? (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
                 <CheckCircle size={36} className="mx-auto text-emerald-400 mb-2" />
-                <h4 className="text-base font-bold text-white">KYC Queue Clear</h4>
-                <p className="text-xs text-slate-400 mt-1">No pending student ID card approvals at this moment.</p>
+                <h4 className="text-base font-bold text-white">No ID Cards Uploaded</h4>
+                <p className="text-xs text-slate-400 mt-1">No external students have uploaded ID cards at this moment.</p>
               </div>
             ) : filteredPendingUsers.length === 0 ? (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center space-y-3">
                 <Search size={36} className="mx-auto text-slate-500 mb-1" />
                 <h4 className="text-base font-bold text-white">No Matching Students Found</h4>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  No pending verification requests matched &ldquo;{kycSearchQuery}&rdquo;. Try searching with a different name, roll number, college, or email.
+                  No ID card uploads matched &ldquo;{kycSearchQuery}&rdquo;. Try searching with a different name, roll number, college, or email.
                 </p>
                 <div>
                   <button
@@ -1232,10 +1240,10 @@ export default function SuperAdminDashboard() {
                     <div key={u.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3.5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-bold text-white text-sm">{u.full_name || 'Student'}</h4>
-                            <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                              Pending Review
+                            <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                              ID Uploaded
                             </span>
                           </div>
                           <p className="text-xs text-purple-300 font-mono mt-0.5">{u.email}</p>
@@ -1265,10 +1273,16 @@ export default function SuperAdminDashboard() {
                         </div>
                       </div>
 
+                      {/* Pass Status Info */}
+                      <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2.5 flex items-center gap-2 text-xs">
+                        <AlertTriangle size={13} className="text-amber-400 shrink-0" />
+                        <span className="text-amber-300">Pass pending — will auto-activate on Cashfree payment success</span>
+                      </div>
+
                       {u.id_card_url && (
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between text-[11px] text-slate-400">
-                            <span>Uploaded College ID Card:</span>
+                            <span className="flex items-center gap-1 text-emerald-400 font-semibold"><CheckCircle size={11} /> College ID Card Uploaded</span>
                             <button
                               onClick={() => setZoomedImage(u.id_card_url)}
                               className="text-purple-400 hover:text-purple-300 flex items-center gap-1 font-semibold"
@@ -1289,29 +1303,19 @@ export default function SuperAdminDashboard() {
                         </div>
                       )}
 
+                      {!u.id_card_url && (
+                        <div className="bg-white/[0.02] border border-white/10 rounded-xl px-3 py-2.5 flex items-center gap-2 text-xs text-slate-500">
+                          <IdCard size={13} />
+                          <span>No ID card uploaded yet</span>
+                        </div>
+                      )}
+
                       <button
                         onClick={() => openStudentInspector(u.id)}
-                        className="w-full py-2 mb-1.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full py-2 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                       >
-                        <Eye size={13} /> Inspect Student & All Events
+                        <Eye size={13} /> Inspect Student &amp; All Events
                       </button>
-
-                      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
-                        <button
-                          disabled={actionLoading}
-                          onClick={() => handleVerify(u.id, 'verified')}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-emerald-900/20 disabled:opacity-50"
-                        >
-                          <Check size={14} /> Approve & Grant Pass
-                        </button>
-                        <button
-                          disabled={actionLoading}
-                          onClick={() => handleVerify(u.id, 'rejected')}
-                          className="flex-1 bg-red-600/80 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                        >
-                          <X size={14} /> Reject
-                        </button>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -1676,40 +1680,29 @@ export default function SuperAdminDashboard() {
                   )}
                 </div>
 
-                {/* Modal Footer / Verification Action */}
+                {/* Modal Footer / Verification State Indicator */}
                 <div className="p-4 border-t border-white/10 bg-[#080413] flex items-center justify-between gap-3">
-                  {inspectingData?.user?.verification_status === 'verified' ? (
+                  {inspectingData?.user?.verification_status === 'verified' || inspectingData?.user?.platform_fee_paid || inspectingData?.user?.is_amrita_student ? (
                     <div className="w-full flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5">
                       <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                         <CheckCircle size={16} />
-                        <span>✓ Verified Student Account & Pass Active</span>
+                        <span>✓ Cashfree Verified • Official Festival Pass &amp; QR Active</span>
                       </div>
                       <span className="text-[11px] text-emerald-300 font-mono">
-                        {inspectingData?.user?.verified_at ? `Verified: ${formatDateTimeIST(inspectingData.user.verified_at)}` : 'Approved'}
+                        {inspectingData?.user?.pass_type || 'DELEGATE_PASS'}
                       </span>
                     </div>
-                  ) : inspectingData?.user?.verification_status === 'rejected' ? (
-                    <div className="w-full flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">
-                      <div className="flex items-center gap-2 text-red-400 font-semibold text-xs">
-                        <XCircle size={16} />
-                        <span>Student Account Rejected</span>
-                      </div>
-                    </div>
                   ) : (
-                    <div className="w-full flex items-center gap-3">
+                    <div className="w-full flex items-center justify-between bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5">
+                      <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+                        <AlertTriangle size={16} className="text-amber-400" />
+                        <span>Cashfree Payment Pending — Pass will activate automatically on gateway confirmation</span>
+                      </div>
                       <button
-                        disabled={actionLoading}
-                        onClick={() => handleVerify(inspectingData?.user?.id || inspectingUserId, 'verified')}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-900/30"
+                        onClick={() => { setInspectingUserId(null); setInspectingData(null); }}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition-colors"
                       >
-                        <CheckCircle size={14} /> Approve & Verify Pass
-                      </button>
-                      <button
-                        disabled={actionLoading}
-                        onClick={() => handleVerify(inspectingData?.user?.id || inspectingUserId, 'rejected')}
-                        className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                      >
-                        <XCircle size={14} /> Reject
+                        Close
                       </button>
                     </div>
                   )}

@@ -41,15 +41,22 @@ export default function DashboardPage() {
   const checkedIn = registrations.filter(r => r.checked_in_at).length;
 
   const verificationBanner = () => {
-    if (user.verification_status === 'pending') {
+    if (!user.is_amrita_student && !user.platform_fee_paid && user.verification_status !== 'verified') {
       return (
-        <div className="mb-6 flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
-          <AlertTriangle size={18} className="text-amber-400 shrink-0" />
-          <div>
-            <p className="text-amber-300 font-medium text-sm">Account Verification Pending</p>
-            <p className="text-amber-400/70 text-xs mt-0.5">Your profile is currently waiting for approval. Festival Pass & QR Code will be activated automatically once approved.</p>
+        <div className="mb-6 flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+            <div>
+              <p className="text-amber-300 font-medium text-sm">Festival Delegate Pass Pending Payment</p>
+              <p className="text-amber-400/70 text-xs mt-0.5">Complete your ₹1000 Cashfree payment to automatically generate your official pass and QR code.</p>
+            </div>
           </div>
-          <span className="ml-auto text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full font-semibold shrink-0">Waiting for Approval</span>
+          <Link
+            href="/dashboard/payment"
+            className="text-xs bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 rounded-xl font-bold shrink-0 transition-colors"
+          >
+            Pay Now →
+          </Link>
         </div>
       );
     }

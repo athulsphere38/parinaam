@@ -794,16 +794,6 @@ export default function AdminUsersPage() {
                             <Edit3 size={13} />
                           </button>
 
-                          {u.verification_status === 'pending' && (
-                            <button
-                              onClick={() => handleVerify(u.id, 'verified')}
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors"
-                              title="Approve Account"
-                            >
-                              <Check size={13} />
-                            </button>
-                          )}
-
                           <button
                             onClick={() => setDeleteConfirmUser(u)}
                             className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors"
@@ -1122,40 +1112,29 @@ export default function AdminUsersPage() {
                   )}
                 </div>
 
-                {/* Modal Footer / Verification Action */}
+                {/* Modal Footer / Verification State Indicator */}
                 <div className="p-4 border-t border-white/10 bg-[#080413] flex items-center justify-between gap-3">
-                  {viewUser.verification_status === 'verified' ? (
+                  {viewUser.verification_status === 'verified' || viewUser.platform_fee_paid || viewUser.is_amrita_student ? (
                     <div className="w-full flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5">
                       <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                         <CheckCircle size={16} />
-                        <span>✓ Verified Student Account & Pass Active</span>
+                        <span>✓ Cashfree Verified • Official Festival Pass &amp; QR Active</span>
                       </div>
                       <span className="text-[11px] text-emerald-300 font-mono">
-                        {fullDetail?.user.verified_at ? `Verified: ${formatDateTimeIST(fullDetail.user.verified_at)}` : 'Approved'}
+                        {viewUser.pass_type || 'DELEGATE_PASS'}
                       </span>
                     </div>
-                  ) : viewUser.verification_status === 'rejected' ? (
-                    <div className="w-full flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">
-                      <div className="flex items-center gap-2 text-red-400 font-semibold text-xs">
-                        <XCircle size={16} />
-                        <span>Student Account Rejected</span>
-                      </div>
-                    </div>
                   ) : (
-                    <div className="w-full flex items-center gap-3">
+                    <div className="w-full flex items-center justify-between bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5">
+                      <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+                        <AlertTriangle size={16} className="text-amber-400" />
+                        <span>Cashfree Payment Pending — Pass will activate automatically on gateway confirmation</span>
+                      </div>
                       <button
-                        disabled={actionLoading}
-                        onClick={() => handleVerify(viewUser.id, 'verified')}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-900/30"
+                        onClick={() => { setViewUser(null); setFullDetail(null); }}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition-colors"
                       >
-                        <CheckCircle size={14} /> Approve & Verify Pass
-                      </button>
-                      <button
-                        disabled={actionLoading}
-                        onClick={() => handleVerify(viewUser.id, 'rejected')}
-                        className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                      >
-                        <XCircle size={14} /> Reject
+                        Close
                       </button>
                     </div>
                   )}

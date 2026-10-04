@@ -104,22 +104,22 @@ export default function StudentPassPage() {
             </div>
 
             <div className="text-left sm:text-right">
-              {user.verification_status === 'verified' ? (
+              {user.is_amrita_student || user.platform_fee_paid || user.verification_status === 'verified' ? (
                 <>
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full">
                     <ShieldCheck size={14} /> PASS ACTIVE
                   </span>
                   <p className="text-[11px] font-mono text-purple-400 mt-1">
-                    {user.is_amrita_student ? 'FREE AMRITA ACCESS' : 'DELEGATE PASS'}
+                    {user.is_amrita_student ? 'FREE AMRITA ACCESS' : 'OFFICIAL DELEGATE PASS'}
                   </p>
                 </>
               ) : (
                 <>
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-                    <Clock size={14} /> VERIFICATION PENDING
+                    <Clock size={14} /> PAYMENT PENDING
                   </span>
                   <p className="text-[11px] font-mono text-amber-400 mt-1">
-                    Waiting for Approval
+                    ₹1000 Delegate Fee Required
                   </p>
                 </>
               )}
@@ -130,7 +130,7 @@ export default function StudentPassPage() {
           <div className="p-6 sm:p-8 grid md:grid-cols-5 gap-6 items-center">
             {/* Left QR Code / Locked Placeholder */}
             <div className="md:col-span-2 flex flex-col items-center justify-center p-5 bg-white/5 border border-white/10 rounded-2xl text-center">
-              {user.verification_status === 'verified' ? (
+              {user.is_amrita_student || user.platform_fee_paid || user.verification_status === 'verified' ? (
                 <>
                   <div className="bg-white p-3.5 rounded-2xl shadow-lg inline-block mb-3">
                     <QRCodeSVG
@@ -145,17 +145,25 @@ export default function StudentPassPage() {
                   <p className="font-mono text-[11px] text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-md">
                     TOKEN: {qrValue.slice(0, 14).toUpperCase()}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-2">Scan at Entry Gates & Event Venues</p>
+                  <p className="text-[10px] text-slate-500 mt-2">Scan at Entry Gates &amp; Event Venues</p>
                 </>
               ) : (
-                <div className="py-4 px-2">
-                  <div className="w-24 h-24 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 text-amber-400">
-                    <Clock size={40} className="animate-pulse" />
+                <div className="py-4 px-2 space-y-3">
+                  <div className="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                    <Clock size={36} className="animate-pulse" />
                   </div>
-                  <p className="font-bold text-xs text-white">QR Pass Locked</p>
-                  <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-                    Digital QR Code will be activated automatically once verification is approved.
-                  </p>
+                  <div>
+                    <p className="font-bold text-xs text-white">QR Pass Locked</p>
+                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                      Digital QR Code will be activated automatically once your Cashfree payment is verified.
+                    </p>
+                  </div>
+                  <Link
+                    href="/dashboard/payment"
+                    className="inline-block w-full py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
+                  >
+                    Pay Delegate Pass (₹1000) →
+                  </Link>
                 </div>
               )}
             </div>
