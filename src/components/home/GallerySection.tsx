@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { GALLERY_ITEMS, GalleryClubItem } from '../../data/festData';
 import {
   Camera,
@@ -193,6 +194,11 @@ export const GallerySection = () => {
     }
   }, [activeItem]);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // When opening a club modal, reset slide index
   const handleOpenClub = (item: GalleryClubItem) => {
     setActiveItem(item);
@@ -317,10 +323,10 @@ export const GallerySection = () => {
         </div>
 
         {/* Modal Lightbox Preview with Full Interactive Slideshow */}
-        {activeItem && (
+        {mounted && activeItem && createPortal(
           <div
             onClick={() => setActiveItem(null)}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-[#030108]/95 backdrop-blur-2xl animate-in fade-in duration-200 overflow-y-auto overscroll-contain"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-[#030108]/95 backdrop-blur-2xl animate-in fade-in duration-200 overflow-y-auto overscroll-contain"
           >
             <div
               onClick={(e) => e.stopPropagation()}
@@ -517,7 +523,8 @@ export const GallerySection = () => {
                 </Link>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </section>
