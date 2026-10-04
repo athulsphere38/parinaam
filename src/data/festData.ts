@@ -137,11 +137,6 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     cardUrl: '/images/clubs/chakravyuha-card.png',
     photos: [
       {
-        url: '/images/clubs/chakravyuha/chakravyuha-photo-1.jpg',
-        title: 'Auditorium Tech Keynote',
-        caption: 'Chakravyuha leads inaugurating technical symposiums and competitive coding hackathons in the university auditorium.'
-      },
-      {
         url: '/images/clubs/chakravyuha/chakravyuha-photo-2.jpg',
         title: 'Smart India Hackathon Winners',
         caption: 'Team Chakravyuha receiving the championship award cheque for breakthrough engineering solutions at SIH.'
@@ -492,28 +487,28 @@ export const GALLERY_ITEMS: GalleryClubItem[] = [
     photos: [
       {
         url: '/images/clubs/relu/relu-photo-1.jpg',
-        title: 'Deep Learning Sprint',
-        caption: 'Developers fine-tuning neural network weights and deploying AI models in real time.'
+        title: 'Keynote & AI Symposium',
+        caption: 'Students and tech enthusiasts gathered in the auditorium for keynote insights on cutting-edge machine learning and AI technologies.'
       },
       {
         url: '/images/clubs/relu/relu-photo-2.jpg',
-        title: 'Autonomous Agents Lab',
-        caption: 'Teams architecting multi-agent reasoning systems and tool-using LLM pipelines.'
+        title: 'ReLU Organizing Committee',
+        caption: 'The core student leadership team and mentors behind ReLU driving tech symposiums and AI workshops at Parinaam.'
       },
       {
         url: '/images/clubs/relu/relu-photo-3.jpg',
-        title: 'AI Architecture Workshop',
-        caption: 'Mentors breaking down transformer attention mechanisms and neural representations.'
+        title: 'Auditorium Tech Assembly',
+        caption: 'A packed auditorium of aspiring engineers and data scientists participating in deep learning and generative AI sessions.'
       },
       {
         url: '/images/clubs/relu/relu-photo-4.jpg',
-        title: 'Predictive Analytics Sprint',
-        caption: 'Data scientists presenting algorithmic evaluation metrics to industry judges.'
+        title: 'Hands-on Ideation & Prototyping',
+        caption: 'Participant teams collaborating on paper worksheets and system architectures to solve real-world industry AI challenges.'
       },
       {
         url: '/images/clubs/relu/relu-photo-5.jpg',
-        title: 'Hackathon Award Presentation',
-        caption: 'Relu champions receiving certificates and awards for machine learning innovation.'
+        title: 'Prompt to Product Cohort',
+        caption: 'Participants and finalists of the flagship Prompt to Product challenge showcasing innovative generative AI solutions.'
       },
     ],
     caption: 'Developers engineering autonomous AI agent swarms and deep learning pipelines solving complex industry challenges.',
