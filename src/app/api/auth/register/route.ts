@@ -7,8 +7,6 @@ import { success, error, serverError } from '@/lib/apiResponse';
 import { isInstitutionalEmail, STANDARD_PLATFORM_FEE_INR } from '@/lib/institutionPolicy';
 import { isValidEmail, isValidStudentName } from '@/lib/utils';
 
-const AMRITA_DOMAIN = 'av.students.amrita.edu';
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     const isAmritaStudent = student_type === 'amrita' || (student_type !== 'other' && isAmritaDomain);
 
-    // Check if email already exists
+    // Check if email already exists in users table
     const existing = await db.query(
       'SELECT id, email, platform_fee_paid, verification_status FROM users WHERE email = $1',
       [emailLower]
@@ -86,7 +84,7 @@ export async function POST(req: NextRequest) {
       return error('Phone number must start with 6, 7, 8, or 9 (excluding +91)');
     }
 
-    // Hash password
+    // Hash password in server memory
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Generate unique QR token
@@ -138,44 +136,8 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // 2. OUTSIDE STUDENT FLOW: Persist user account and Cashfree order
+    // 2. OUTSIDE STUDENT FLOW: Zero DB Writes Before Cashfree Payment
     // =========================================================================
-    const userResult = await db.query(
-      `INSERT INTO users (
-        email, password_hash, full_name, phone,
-        college_name, is_amrita_student, roll_number, department,
-        year_of_study, city, verification_status, qr_token,
-        email_verify_token, email_verified, platform_fee_paid, id_card_url, pass_type
-      ) VALUES ($1,$2,$3,$4,$5,FALSE,$6,$7,$8,$9,'pending',$10,$11,TRUE,FALSE,$12,'DELEGATE_PASS_1000')
-      ON CONFLICT (email) DO UPDATE SET
-        full_name = EXCLUDED.full_name,
-        phone = EXCLUDED.phone,
-        college_name = EXCLUDED.college_name,
-        roll_number = EXCLUDED.roll_number,
-        department = EXCLUDED.department,
-        year_of_study = EXCLUDED.year_of_study,
-        city = EXCLUDED.city,
-        id_card_url = EXCLUDED.id_card_url,
-        updated_at = NOW()
-      RETURNING id, email, full_name, role, is_amrita_student, verification_status, qr_token, platform_fee_paid, id_card_url, pass_type`,
-      [
-        emailLower,
-        passwordHash,
-        full_name,
-        cleanPhone,
-        college_name,
-        roll_number || null,
-        department || null,
-        year_of_study || null,
-        city || null,
-        qrToken,
-        emailVerifyToken,
-        id_card_url || null,
-      ]
-    );
-
-    const user = userResult.rows[0];
-
     const { createCashfreeOrder } = await import('@/lib/cashfree');
     const cleanOrderId = `cf_reg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     let cfOrder: any;
@@ -186,7 +148,7 @@ export async function POST(req: NextRequest) {
         order_amount: STANDARD_PLATFORM_FEE_INR,
         order_currency: 'INR',
         customer_details: {
-          customer_id: user.id || `cand_${cleanPhone}`,
+          customer_id: `cand_${cleanPhone}`,
           customer_name: full_name,
           customer_email: emailLower,
           customer_phone: cleanPhone,
@@ -198,25 +160,29 @@ export async function POST(req: NextRequest) {
       return error(`Payment gateway initialization failed: ${cfErr.message || 'Unable to create Cashfree payment session'}`, 502);
     }
 
-    // Persist payment order in database
-    let paymentDbId: string | null = null;
-    try {
-      const payRes = await db.query(
-        `INSERT INTO payments (user_id, type, amount, cf_order_id, payment_session_id, razorpay_order_id, status)
-         VALUES ($1, 'platform_fee', 100000, $2, $3, $4, 'created')
-         RETURNING id`,
-        [user.id, cfOrder.order_id, cfOrder.payment_session_id, cfOrder.order_id]
-      );
-      paymentDbId = payRes.rows[0]?.id || null;
-    } catch (pErr: any) {
-      console.warn('[Payments table notice]:', pErr.message);
-    }
+    // Create encrypted registration_token containing registration payload & order binding
+    const regToken = await signRegistrationToken({
+      type: 'platform_fee',
+      order_id: cfOrder.order_id,
+      email: emailLower,
+      password_hash: passwordHash,
+      full_name,
+      phone: cleanPhone,
+      college_name,
+      roll_number: roll_number || null,
+      department: department || null,
+      year_of_study: year_of_study || null,
+      city: city || null,
+      id_card_url: id_card_url || null,
+      qr_token: qrToken,
+      emailVerifyToken,
+    });
 
     const orderData = {
       order_id: cfOrder.order_id,
       cf_order_id: cfOrder.cf_order_id,
       payment_session_id: cfOrder.payment_session_id,
-      payment_db_id: paymentDbId,
+      registration_token: regToken,
       amount: STANDARD_PLATFORM_FEE_INR * 100, // paise
       amount_in_rupees: STANDARD_PLATFORM_FEE_INR,
       currency: 'INR',
@@ -229,22 +195,15 @@ export async function POST(req: NextRequest) {
       ],
     };
 
-    const token = await signToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role as 'student' | 'club_admin' | 'super_admin',
-    });
-
-    const response = success({
-      user,
+    // Return Cashfree order data & registration token to client.
+    // ZERO DB writes performed (no users row, no payments row, no session cookie).
+    return success({
+      user: null,
       is_amrita_student: false,
       requires_payment: true,
       cashfree_order: orderData,
       razorpay_order: orderData,
     }, 201);
-
-    response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
-    return response;
   } catch (err: any) {
     console.error('Registration error:', err);
     return error(err?.message || 'Registration failed. Please try again.', 500);

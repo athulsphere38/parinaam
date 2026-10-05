@@ -4,9 +4,10 @@ import { NextRequest } from 'next/server';
 import { PoolClient } from 'pg';
 import { db } from '@/lib/db';
 import { getSessionUser, signToken, verifyRegistrationToken, COOKIE_NAME, COOKIE_OPTIONS } from '@/lib/auth';
-import { success, error, unauthorized, serverError } from '@/lib/apiResponse';
-import crypto from 'crypto';
+import { success, error, unauthorized } from '@/lib/apiResponse';
 import { v4 as uuidv4 } from 'uuid';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // POST /api/payments/verify — verify Cashfree / payment and confirm registrations
 export async function POST(req: NextRequest) {
@@ -28,25 +29,164 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const effectiveOrderId = order_id || cf_order_id || razorpay_order_id;
-
-    let targetUserId = session?.userId;
-
-    if (!targetUserId && (payment_db_id || effectiveOrderId)) {
-      const pRes = await db.query(
-        `SELECT user_id FROM payments WHERE id::text = $1 OR cf_order_id = $2 OR razorpay_order_id = $3`,
-        [payment_db_id ?? null, effectiveOrderId ?? null, effectiveOrderId ?? null]
-      );
-      if (pRes.rows.length > 0) {
-        targetUserId = pRes.rows[0].user_id;
-      }
+    if (!payment_db_id && !effectiveOrderId) {
+      return error('Payment order identifier is required', 400);
     }
 
-    if (!targetUserId && !(type === 'platform_fee' && registration_token)) {
-      return unauthorized();
+    const isUuid = typeof payment_db_id === 'string' && UUID_REGEX.test(payment_db_id);
+
+    let targetUserId: string | null = null;
+    let isOutsideRegFlow = false;
+    let regPayload: Record<string, any> | null = null;
+    let authorizedPaymentRecord: any = null;
+
+    // =========================================================================
+    // AUTHORIZATION & OWNERSHIP CHECK (BEFORE Gateway & DB Mutations)
+    // =========================================================================
+
+    if (session?.userId) {
+      // Flow A: Authenticated Session (Logged-in student)
+      targetUserId = session.userId;
+
+      let pRes;
+      if (isUuid) {
+        pRes = await db.query(
+          `SELECT id, status, type, amount, cf_order_id, razorpay_order_id, user_id
+           FROM payments
+           WHERE id = $1::uuid AND user_id = $2::uuid`,
+          [payment_db_id, targetUserId]
+        );
+      } else {
+        pRes = await db.query(
+          `SELECT id, status, type, amount, cf_order_id, razorpay_order_id, user_id
+           FROM payments
+           WHERE (cf_order_id = $1 OR razorpay_order_id = $1) AND user_id = $2::uuid`,
+          [effectiveOrderId, targetUserId]
+        );
+      }
+
+      if (pRes.rows.length === 0) {
+        return error('Unauthorized or payment order not found for user', 403);
+      }
+
+      authorizedPaymentRecord = pRes.rows[0];
+
+      // Strict payment type authorization:
+      // If client explicitly requests platform_fee verification, DB payment type MUST be platform_fee.
+      if (type === 'platform_fee' && authorizedPaymentRecord.type !== 'platform_fee') {
+        return error('Payment record type mismatch. Expected platform_fee.', 400);
+      }
+
+      // Idempotency check for logged-in user
+      if (authorizedPaymentRecord.status === 'paid') {
+        if (authorizedPaymentRecord.type === 'platform_fee') {
+          const uRes = await db.query(
+            `SELECT id, full_name, email, role, qr_token, verification_status, platform_fee_paid, pass_type FROM users WHERE id = $1::uuid`,
+            [targetUserId]
+          );
+          return success({
+            message: 'Payment already verified!',
+            user: uRes.rows[0],
+            qr_token: uRes.rows[0]?.qr_token,
+            already_verified: true,
+          });
+        }
+        return success({ message: 'Payment already verified!', already_verified: true });
+      }
+    } else {
+      // Flow B: Unauthenticated Outside-Student Flow
+      if (type !== 'platform_fee' || !registration_token) {
+        return unauthorized();
+      }
+
+      // Decrypt and verify registration token
+      regPayload = await verifyRegistrationToken(registration_token);
+      if (!regPayload || !regPayload.email || !regPayload.password_hash) {
+        return error('Invalid or expired registration token. Please register again.', 400);
+      }
+
+      if (regPayload.type && regPayload.type !== 'platform_fee') {
+        return error('Invalid registration token type.', 400);
+      }
+
+      // Strengthened Order binding check: token order_id MUST exist and match supplied order_id exactly
+      if (!regPayload.order_id) {
+        return error('Registration token missing order_id.', 400);
+      }
+      if (!effectiveOrderId) {
+        return error('Payment order identifier is required.', 400);
+      }
+      if (regPayload.order_id !== effectiveOrderId) {
+        return error('Registration token is not valid for this payment order.', 400);
+      }
+
+      // Lookup existing payment row if it was already recorded in a prior attempt
+      let pRes;
+      if (isUuid) {
+        pRes = await db.query(
+          `SELECT p.id, p.status, p.type, p.user_id, p.cf_order_id, p.razorpay_order_id, u.email
+           FROM payments p
+           LEFT JOIN users u ON p.user_id = u.id
+           WHERE p.id = $1::uuid`,
+          [payment_db_id]
+        );
+      } else {
+        pRes = await db.query(
+          `SELECT p.id, p.status, p.type, p.user_id, p.cf_order_id, p.razorpay_order_id, u.email
+           FROM payments p
+           LEFT JOIN users u ON p.user_id = u.id
+           WHERE (p.cf_order_id = $1 OR p.razorpay_order_id = $1)`,
+          [effectiveOrderId]
+        );
+      }
+
+      if (pRes.rows.length > 0) {
+        authorizedPaymentRecord = pRes.rows[0];
+
+        // Strict DB type check: Outside token flow must operate ONLY on platform_fee payments
+        if (authorizedPaymentRecord.type !== 'platform_fee') {
+          return error('Payment record type mismatch. Expected platform_fee.', 400);
+        }
+
+        // Idempotency check for outside student
+        if (authorizedPaymentRecord.status === 'paid') {
+          if (
+            authorizedPaymentRecord.email &&
+            authorizedPaymentRecord.email.toLowerCase().trim() !== regPayload.email.toLowerCase().trim()
+          ) {
+            return error('Registration token email does not match payment identity.', 400);
+          }
+
+          const uRes = await db.query(
+            `SELECT id, full_name, email, role, qr_token, verification_status, platform_fee_paid, pass_type FROM users WHERE email = $1`,
+            [regPayload.email.toLowerCase().trim()]
+          );
+          const userObj = uRes.rows[0] || null;
+          const response = success({
+            message: 'Payment already verified!',
+            user: userObj,
+            qr_token: userObj?.qr_token,
+            already_verified: true,
+          });
+
+          if (userObj) {
+            const token = await signToken({
+              userId: userObj.id,
+              email: userObj.email,
+              role: userObj.role as 'student' | 'club_admin' | 'super_admin',
+            });
+            response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
+          }
+
+          return response;
+        }
+      }
+
+      isOutsideRegFlow = true;
     }
 
     // =========================================================================
-    // Cashfree / Gateway Verification
+    // GATEWAY VERIFICATION (Runs ONLY before DB Creation/Mutation)
     // =========================================================================
     const { verifyCashfreePayment } = await import('@/lib/cashfree');
     let isPaymentValid = false;
@@ -68,7 +208,6 @@ export async function POST(req: NextRequest) {
       return error('Payment verification failed on gateway. Please try again.', 400);
     }
 
-    // Resolved payment identifier
     const payId: string =
       cf_payment_id ||
       cfPaymentDetails?.cf_payment_id ||
@@ -77,30 +216,17 @@ export async function POST(req: NextRequest) {
     const sig: string = razorpay_signature || 'cf_verified';
 
     // =========================================================================
-    // 1. PLATFORM FEE VERIFICATION & ATOMIC USER CREATION FOR OUTSIDE USERS
+    // 1. PLATFORM FEE VERIFICATION & ATOMIC DB CREATION FOR OUTSIDE USERS
     // =========================================================================
-    if (type === 'platform_fee') {
+    if (isOutsideRegFlow || authorizedPaymentRecord?.type === 'platform_fee') {
       let targetUser: any = null;
 
-      if (registration_token) {
-        // Outside student registration verification (User row did NOT exist prior to payment)
-        const regPayload = await verifyRegistrationToken(registration_token);
-        if (!regPayload || !regPayload.email || !regPayload.password_hash) {
-          return error('Invalid or expired registration token. Please register again.', 400);
-        }
-
+      if (isOutsideRegFlow && regPayload) {
+        // Outside student registration: atomic DB transaction AFTER gateway PAID confirmation
         client = await db.getClient();
         try {
-          // Ensure schema columns exist
-          await client.query(`
-            ALTER TABLE payments ADD COLUMN IF NOT EXISTS cf_order_id TEXT;
-            ALTER TABLE payments ADD COLUMN IF NOT EXISTS cf_payment_id TEXT;
-            ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_session_id TEXT;
-          `).catch(() => {});
-
           await client.query('BEGIN');
 
-          // Idempotency check: Look up existing user by email
           const existingUserRes = await client.query(
             `SELECT id, full_name, email, role, qr_token, verification_status, platform_fee_paid, pass_type
              FROM users WHERE email = $1 FOR UPDATE`,
@@ -109,21 +235,22 @@ export async function POST(req: NextRequest) {
 
           if (existingUserRes.rows.length > 0) {
             targetUser = existingUserRes.rows[0];
-            await client.query(
-              `UPDATE users
-               SET platform_fee_paid = TRUE,
-                   verification_status = 'verified',
-                   pass_type = 'DELEGATE_PASS_1000',
-                   platform_payment_id = $1,
-                   platform_fee_paid_at = NOW()
-               WHERE id = $2`,
-              [payId, targetUser.id]
-            );
-            targetUser.platform_fee_paid = true;
-            targetUser.verification_status = 'verified';
-            targetUser.pass_type = 'DELEGATE_PASS_1000';
-          } else if (regPayload) {
-            // Create outside user row if not yet inserted
+            if (!targetUser.platform_fee_paid) {
+              await client.query(
+                `UPDATE users
+                 SET platform_fee_paid = TRUE,
+                     verification_status = 'verified',
+                     pass_type = 'DELEGATE_PASS_1000',
+                     platform_payment_id = $1,
+                     platform_fee_paid_at = NOW()
+                 WHERE id = $2::uuid`,
+                [payId, targetUser.id]
+              );
+              targetUser.platform_fee_paid = true;
+              targetUser.verification_status = 'verified';
+              targetUser.pass_type = 'DELEGATE_PASS_1000';
+            }
+          } else {
             const qrToken = regPayload.qr_token || (uuidv4().replace(/-/g, '') + uuidv4().replace(/-/g, '').slice(0, 8));
             const userInsertRes = await client.query(
               `INSERT INTO users (
@@ -152,23 +279,22 @@ export async function POST(req: NextRequest) {
             targetUser = userInsertRes.rows[0];
           }
 
-          // Insert or update payment record linked to newly created user
           const pRes = await client.query(
-            `SELECT id, status FROM payments WHERE (cf_order_id = $1 OR razorpay_order_id = $2) AND type = 'platform_fee' FOR UPDATE`,
-            [effectiveOrderId ?? null, effectiveOrderId ?? null]
+            `SELECT id, status FROM payments WHERE (cf_order_id = $1 OR razorpay_order_id = $1) AND type = 'platform_fee' FOR UPDATE`,
+            [effectiveOrderId]
           );
 
           if (pRes.rows.length === 0) {
             await client.query(
               `INSERT INTO payments (user_id, type, amount, cf_order_id, cf_payment_id, razorpay_order_id, razorpay_payment_id, razorpay_signature, status)
-               VALUES ($1, 'platform_fee', 100000, $2, $3, $4, $5, $6, 'paid')`,
-              [targetUser.id, effectiveOrderId ?? null, payId, effectiveOrderId ?? null, payId, sig]
+               VALUES ($1::uuid, 'platform_fee', 100000, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::varchar, 'paid')`,
+              [targetUser.id, effectiveOrderId, payId, effectiveOrderId, payId, sig]
             );
           } else if (pRes.rows[0].status !== 'paid') {
             await client.query(
               `UPDATE payments
-               SET status = 'paid', cf_payment_id = $1, razorpay_payment_id = $2, razorpay_signature = $3, user_id = $4, updated_at = NOW()
-               WHERE id = $5`,
+               SET status = 'paid', cf_payment_id = $1::varchar, razorpay_payment_id = $2::varchar, razorpay_signature = $3::varchar, user_id = $4::uuid, updated_at = NOW()
+               WHERE id = $5::uuid`,
               [payId, payId, sig, targetUser.id, pRes.rows[0].id]
             );
           }
@@ -188,30 +314,11 @@ export async function POST(req: NextRequest) {
         // Logged-in user paying platform fee
         if (!targetUserId) return unauthorized();
 
-        // Idempotency check: if payment already marked paid
-        const pRes = await db.query(
-          `SELECT id, status, user_id FROM payments WHERE (id::text = $1 OR cf_order_id = $2 OR razorpay_order_id = $3) AND user_id = $4`,
-          [payment_db_id ?? null, effectiveOrderId ?? null, effectiveOrderId ?? null, targetUserId]
-        );
-
-        if (pRes.rows.length > 0 && pRes.rows[0].status === 'paid') {
-          const uRes = await db.query(
-            `SELECT id, full_name, email, role, qr_token, verification_status, platform_fee_paid, pass_type FROM users WHERE id = $1`,
-            [targetUserId]
-          );
-          return success({
-            message: 'Payment already verified!',
-            user: uRes.rows[0],
-            qr_token: uRes.rows[0]?.qr_token,
-            already_verified: true,
-          });
-        }
-
         await db.query(
           `UPDATE payments
-           SET cf_payment_id = $1, razorpay_payment_id = $2, razorpay_signature = $3, status = 'paid', updated_at = NOW()
-           WHERE (id::text = $4 OR cf_order_id = $5 OR razorpay_order_id = $6) AND user_id = $7`,
-          [payId, payId, sig, payment_db_id ?? null, effectiveOrderId ?? null, effectiveOrderId ?? null, targetUserId],
+           SET cf_payment_id = $1, razorpay_payment_id = $1, razorpay_signature = $2, status = 'paid', updated_at = NOW()
+           WHERE id = $3::uuid AND user_id = $4::uuid`,
+          [payId, sig, authorizedPaymentRecord.id, targetUserId],
         );
         const userUpdateRes = await db.query(
           `UPDATE users
@@ -220,7 +327,7 @@ export async function POST(req: NextRequest) {
                pass_type = 'DELEGATE_PASS_1000', 
                platform_payment_id = $1, 
                platform_fee_paid_at = NOW()
-           WHERE id = $2
+           WHERE id = $2::uuid
            RETURNING id, full_name, email, role, qr_token, verification_status, platform_fee_paid, pass_type`,
           [payId, targetUserId],
         );
@@ -233,6 +340,7 @@ export async function POST(req: NextRequest) {
         qr_token: targetUser?.qr_token,
       });
 
+      // ONLY set session cookie after successful DB transaction commit
       if (targetUser) {
         const token = await signToken({
           userId: targetUser.id,
@@ -247,38 +355,24 @@ export async function POST(req: NextRequest) {
 
     // =========================================================================
     // 2. MULTI-EVENT REGISTRATION VERIFICATION
-    //
-    // Transaction boundary:
-    //   BEGIN
-    //   → lock payment row (FOR UPDATE)           — prevent concurrent verifications
-    //   → idempotency check (return if already 'paid')
-    //   → fetch registrations linked to this payment only
-    //   → lock event rows in deterministic order (FOR UPDATE)
-    //   → for each PENDING registration:
-    //       re-validate capacity under lock
-    //       → CONFIRMED  (enrolled + 1) | CANCELLED (refunded)
-    //   → skip CONFIRMED registrations (crash-recovery path, no double-increment)
-    //   → update payment status
-    //   COMMIT
     // =========================================================================
-    client = await db.getClient();
+    if (!targetUserId) return unauthorized();
 
+    client = await db.getClient();
     let confirmedCount = 0;
     let overbookedCount = 0;
-    let paymentRecordId: string = '';
     let rzpOrderIdForReg: string | null = null;
     let needsRefund = false;
 
     try {
       await client.query('BEGIN');
 
-      // ── Lock the payment row to prevent concurrent verification attempts ───
       const paymentRes = await client.query(
         `SELECT id, status, amount, cf_order_id, razorpay_order_id, user_id
          FROM payments
-         WHERE (id::text = $1 OR cf_order_id = $2 OR razorpay_order_id = $3) AND user_id = $4
+         WHERE id = $1::uuid AND user_id = $2::uuid
          FOR UPDATE`,
-        [payment_db_id ?? null, effectiveOrderId ?? null, effectiveOrderId ?? null, targetUserId],
+        [authorizedPaymentRecord.id, targetUserId],
       );
 
       if (paymentRes.rows.length === 0) {
@@ -289,10 +383,8 @@ export async function POST(req: NextRequest) {
       }
 
       const paymentRecord = paymentRes.rows[0];
-      paymentRecordId = paymentRecord.id;
       rzpOrderIdForReg = paymentRecord.razorpay_order_id;
 
-      // ── Order ID consistency check ──────────────────────────────────────────
       if (
         paymentRecord.razorpay_order_id &&
         razorpay_order_id &&
@@ -304,7 +396,6 @@ export async function POST(req: NextRequest) {
         return error('Payment verification failed — order ID mismatch', 400);
       }
 
-      // ── Idempotency: if already paid, return success without side-effects ──
       if (paymentRecord.status === 'paid') {
         await client.query('ROLLBACK');
         client.release();
@@ -312,15 +403,12 @@ export async function POST(req: NextRequest) {
         return success({ message: 'Payment already verified!', already_verified: true });
       }
 
-      // ── Fetch ONLY the registrations belonging to this specific payment ────
-      // The authoritative relationship is registrations.payment_id = payments.id.
-      // No broad fallback based on user_id + payment_status.
       const regsRes = await client.query(
         `SELECT r.id, r.event_id, r.status, r.payment_status
          FROM registrations r
-         WHERE r.payment_id = $1
+         WHERE r.payment_id = $1::varchar OR r.payment_id = $2::varchar OR r.payment_id = $3::varchar
          ORDER BY r.event_id`,
-        [paymentRecord.id],
+        [String(paymentRecord.id), paymentRecord.cf_order_id || '', paymentRecord.razorpay_order_id || ''],
       );
 
       if (regsRes.rows.length === 0) {
@@ -332,8 +420,6 @@ export async function POST(req: NextRequest) {
 
       const linkedRegs = regsRes.rows;
 
-      // ── Lock all relevant event rows in deterministic (sorted UUID) order ──
-      // Reading capacity and enrolled UNDER the lock ensures accurate values.
       const eventIds = [...new Set(linkedRegs.map((r: any) => r.event_id as string))].sort();
       const evPlaceholders = eventIds.map((_: string, idx: number) => `$${idx + 1}`).join(', ');
       const evtRes = await client.query(
@@ -344,7 +430,7 @@ export async function POST(req: NextRequest) {
          FOR UPDATE`,
         eventIds,
       );
-      // Build a mutable map: event_id → { capacity, enrolled, fee }
+
       const evtMap: Record<string, { capacity: number | null; enrolled: number; fee: number }> = {};
       for (const row of evtRes.rows) {
         evtMap[row.id] = {
@@ -354,31 +440,24 @@ export async function POST(req: NextRequest) {
         };
       }
 
-      // ── Process each registration ─────────────────────────────────────────
       for (const reg of linkedRegs) {
         if (reg.status === 'CONFIRMED') {
-          // Crash-recovery: already confirmed in a prior attempt.
-          // Count it but do NOT increment enrolled again.
           confirmedCount++;
           continue;
         }
 
         if (reg.status === 'CANCELLED') {
-          // Previously cancelled (e.g. expired hold or prior refund path).
           overbookedCount++;
           continue;
         }
 
-        // Only PENDING registrations are processed below.
         const evt = evtMap[reg.event_id];
         if (!evt) {
-          // Event row not found (should not happen given FK constraints).
           overbookedCount++;
           continue;
         }
 
         if (!evt.capacity || evt.enrolled < evt.capacity) {
-          // Capacity available — confirm this registration.
           await client.query(
             `UPDATE registrations
              SET status          = 'CONFIRMED',
@@ -387,19 +466,16 @@ export async function POST(req: NextRequest) {
                  payment_order_id = $2,
                  amount_paid     = $3,
                  confirmed_at    = NOW()
-             WHERE id = $4`,
+             WHERE id = $4::uuid`,
             [payId, rzpOrderIdForReg ?? razorpay_order_id ?? null, evt.fee, reg.id],
           );
           await client.query(
-            `UPDATE events SET enrolled = enrolled + 1 WHERE id = $1`,
+            `UPDATE events SET enrolled = enrolled + 1 WHERE id = $1::uuid`,
             [reg.event_id],
           );
-          // Reflect the increment in the local map so subsequent iterations
-          // within the same transaction see the updated count.
           evt.enrolled += 1;
           confirmedCount++;
         } else {
-          // Capacity exhausted after the 15-minute hold expired.
           await client.query(
             `UPDATE registrations
              SET status          = 'CANCELLED',
@@ -407,34 +483,31 @@ export async function POST(req: NextRequest) {
                  payment_id      = $1,
                  payment_order_id = $2,
                  updated_at      = NOW()
-             WHERE id = $3`,
+             WHERE id = $3::uuid`,
             [payId, rzpOrderIdForReg ?? razorpay_order_id ?? null, reg.id],
           );
           overbookedCount++;
         }
       }
 
-      // ── Update payment status ─────────────────────────────────────────────
       if (overbookedCount > 0 && confirmedCount === 0) {
-        // All events were overbooked — mark payment for refund.
         await client.query(
           `UPDATE payments
-           SET status = 'refunded', cf_payment_id = $1, razorpay_payment_id = $2, razorpay_signature = $3, updated_at = NOW()
-           WHERE id = $4`,
-          [payId, payId, sig, paymentRecord.id],
+           SET status = 'refunded', cf_payment_id = $1, razorpay_payment_id = $1, razorpay_signature = $2, updated_at = NOW()
+           WHERE id = $3::uuid`,
+          [payId, sig, paymentRecord.id],
         );
         needsRefund = true;
       } else {
-        // At least one registration confirmed — payment is paid.
         await client.query(
           `UPDATE payments
-           SET status = 'paid', cf_payment_id = $1, razorpay_payment_id = $2, razorpay_signature = $3, updated_at = NOW()
-           WHERE id = $4`,
-          [payId, payId, sig, paymentRecord.id],
+           SET status = 'paid', cf_payment_id = $1, razorpay_payment_id = $1, razorpay_signature = $2, updated_at = NOW()
+           WHERE id = $3::uuid`,
+          [payId, sig, paymentRecord.id],
         );
         if (paymentRecord.user_id) {
           await client.query(
-            `UPDATE users SET platform_fee_paid = true WHERE id = $1`,
+            `UPDATE users SET platform_fee_paid = true WHERE id = $1::uuid`,
             [paymentRecord.user_id],
           );
         }
@@ -445,26 +518,17 @@ export async function POST(req: NextRequest) {
       client = null;
     } catch (txErr) {
       if (client) {
-        try {
-          await client.query('ROLLBACK');
-        } catch {
-          /* ignore */
-        }
+        try { await client.query('ROLLBACK'); } catch {}
         client.release();
         client = null;
       }
-      throw txErr; // re-throw to outer catch
+      throw txErr;
     }
-
-    // =========================================================================
-    // Post-COMMIT: Refund tracking (if all events were overbooked)
-    // =========================================================================
 
     if (needsRefund) {
       return success({
         message:
-          'Capacity for selected events was filled after hold expiry. ' +
-          'Your payment has been marked for automatic refund.',
+          'Capacity for selected events was filled after hold expiry. Your payment has been marked for automatic refund.',
         refunded: true,
         confirmed_count: 0,
       });
@@ -480,11 +544,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     if (client) {
-      try {
-        await client.query('ROLLBACK');
-      } catch {
-        /* ignore */
-      }
+      try { await client.query('ROLLBACK'); } catch {}
       client.release();
     }
     const errorMsg = (err as Error)?.message || 'Payment verification failed.';
