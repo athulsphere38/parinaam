@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
+import { Oswald, Silkscreen, Anek_Devanagari, Inter, Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { FestProvider } from '../context/FestContext';
 import { AuthProvider } from '../context/AuthContext';
@@ -8,6 +9,48 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { ProfileCompletionModal } from '../components/layout/ProfileCompletionModal';
 import { CustomCursor } from '../components/ui/CustomCursor';
+
+const oswald = Oswald({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '500'],
+  variable: '--font-oswald',
+  display: 'swap',
+});
+
+const silkscreen = Silkscreen({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-silkscreen',
+  display: 'swap',
+});
+
+const anekDevanagari = Anek_Devanagari({
+  subsets: ['latin', 'devanagari'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-devanagari',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800', '900'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -27,14 +70,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark w-full max-w-full overflow-x-hidden" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`dark w-full max-w-full overflow-x-hidden ${oswald.variable} ${silkscreen.variable} ${anekDevanagari.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500&family=Silkscreen:wght@400;700&family=Anek+Devanagari:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        />
         <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
       </head>
       <body

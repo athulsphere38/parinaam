@@ -60,7 +60,7 @@ export const FeaturedEvents = () => {
   ];
 
   useEffect(() => {
-    fetch('/api/events?status=published&limit=50')
+    fetch('/api/events?status=published&limit=6')
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.data.events)) {

@@ -14,6 +14,10 @@ export const CustomCursor = () => {
   const rafId    = useRef<number>(0);
   const isTouch  = useRef(false);
 
+  const lastTargetRef   = useRef<EventTarget | null>(null);
+  const currentStateRef = useRef<CursorState>('default');
+  const currentLabelRef = useRef<string>('');
+
   const [state, setState] = useState<CursorState>('default');
   const [label, setLabel] = useState('');
   const [visible, setVisible] = useState(false);
@@ -43,7 +47,7 @@ export const CustomCursor = () => {
           dotRef.current.style.transform =
             `translate(${e.clientX}px, ${e.clientY}px) translate(-50%,-50%)`;
         }
-        if (!visible) setVisible(true);
+        setVisible(prev => (prev ? prev : true));
       } catch {
         // ignore
       }
@@ -51,10 +55,22 @@ export const CustomCursor = () => {
 
     const detectTarget = (e: MouseEvent) => {
       try {
-        const rawTarget = e.target as any;
-        if (!rawTarget || typeof rawTarget.closest !== 'function') {
-          setState('default');
-          setLabel('');
+        const rawTarget = e.target as HTMLElement | null;
+        if (!rawTarget) return;
+
+        // Skip DOM tree traversal if mouse is moving inside the same DOM element
+        if (rawTarget === lastTargetRef.current) return;
+        lastTargetRef.current = rawTarget;
+
+        if (typeof rawTarget.closest !== 'function') {
+          if (currentStateRef.current !== 'default') {
+            currentStateRef.current = 'default';
+            setState('default');
+          }
+          if (currentLabelRef.current !== '') {
+            currentLabelRef.current = '';
+            setLabel('');
+          }
           return;
         }
 
@@ -63,26 +79,50 @@ export const CustomCursor = () => {
         const isCard = rawTarget.closest('[data-cursor="card"]');
         const lbl    = (rawTarget.closest('[data-cursor-label]') as HTMLElement)?.dataset?.cursorLabel ?? '';
 
-        setLabel(lbl);
+        const nextState: CursorState = isText ? 'text' : (isBtn || isCard) ? 'hover' : 'default';
 
-        if (isText)   setState('text');
-        else if (isBtn || isCard) setState('hover');
-        else          setState('default');
+        if (nextState !== currentStateRef.current) {
+          currentStateRef.current = nextState;
+          setState(nextState);
+        }
+        if (lbl !== currentLabelRef.current) {
+          currentLabelRef.current = lbl;
+          setLabel(lbl);
+        }
       } catch {
-        setState('default');
-        setLabel('');
+        if (currentStateRef.current !== 'default') {
+          currentStateRef.current = 'default';
+          setState('default');
+        }
+        if (currentLabelRef.current !== '') {
+          currentLabelRef.current = '';
+          setLabel('');
+        }
       }
     };
 
-    const onDown = () => setState('click');
+    const onDown = () => {
+      if (currentStateRef.current !== 'click') {
+        currentStateRef.current = 'click';
+        setState('click');
+      }
+    };
     const onUp   = () => {
       try {
+        lastTargetRef.current = null; // Force target re-evaluation
         if (pos.current.x < 0 || pos.current.y < 0) return;
-        const el = document.elementFromPoint(pos.current.x, pos.current.y) as any;
+        const el = document.elementFromPoint(pos.current.x, pos.current.y) as HTMLElement | null;
         const isBtn = el && typeof el.closest === 'function' ? el.closest('button, a, [role="button"]') : null;
-        setState(isBtn ? 'hover' : 'default');
+        const nextState: CursorState = isBtn ? 'hover' : 'default';
+        if (nextState !== currentStateRef.current) {
+          currentStateRef.current = nextState;
+          setState(nextState);
+        }
       } catch {
-        setState('default');
+        if (currentStateRef.current !== 'default') {
+          currentStateRef.current = 'default';
+          setState('default');
+        }
       }
     };
     const onLeave = () => setVisible(false);
@@ -106,7 +146,7 @@ export const CustomCursor = () => {
       document.documentElement.removeEventListener('mouseenter', onEnter);
       cancelAnimationFrame(rafId.current);
     };
-  }, [animate, visible]);
+  }, [animate]);
 
   if (isTouch.current) return null;
 

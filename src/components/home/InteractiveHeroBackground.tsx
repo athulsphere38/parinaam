@@ -32,7 +32,6 @@ export const InteractiveHeroBackground: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
     let width = 0;
     let height = 0;
 
@@ -96,7 +95,28 @@ export const InteractiveHeroBackground: React.FC = () => {
     const maxConnectDist = 120;
     const mouseConnectDist = 150;
 
+    let isVisible = true;
+    let animationFrameId: number | null = null;
+
+    const startAnimation = () => {
+      if (!animationFrameId && isVisible) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    const stopAnimation = () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    };
+
     const render = () => {
+      if (!isVisible) {
+        animationFrameId = null;
+        return;
+      }
+
       ctx.clearRect(0, 0, width, height);
 
       const mouse = mouseRef.current;
@@ -168,10 +188,30 @@ export const InteractiveHeroBackground: React.FC = () => {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    render();
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (entry) {
+            isVisible = entry.isIntersecting;
+            if (isVisible) {
+              startAnimation();
+            } else {
+              stopAnimation();
+            }
+          }
+        },
+        { threshold: 0.05 }
+      );
+      if (canvas) observer.observe(canvas);
+    } else {
+      startAnimation();
+    }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      stopAnimation();
+      if (observer) observer.disconnect();
       window.removeEventListener('resize', resize);
       if (section) {
         section.removeEventListener('mousemove', onMouseMove);
