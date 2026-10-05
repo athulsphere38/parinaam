@@ -1,99 +1,57 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { notFound } from 'next/navigation';
 import {
   MapPin, Clock, Users, IndianRupee, Trophy, FileText,
-  Phone, Mail, ArrowLeft, CheckCircle, AlertTriangle,
-  Loader2, Tag, Calendar, Layers, ExternalLink, Globe
+  Phone, Mail, ArrowLeft, Calendar, ExternalLink
 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext';
-import { isStudentProfileComplete } from '@/lib/institutionPolicy';
-import { EventRegistrationModal } from '@/components/events/EventRegistrationModal';
+import { db } from '@/lib/db';
+import { EventRegistrationActions } from '@/components/events/EventRegistrationActions';
 
-interface EventDetail {
-  id: string; name: string; event_code: string; tagline: string;
-  short_description: string; full_description: string; category: string;
-  tags: string[]; venue: string; date_start: string; date_end: string;
-  start_time: string; end_time: string; day_number: number;
-  min_team_size: number; max_team_size: number;
-  capacity: number; enrolled: number; fee: number;
-  amrita_fee?: number | null; other_fee?: number | null;
-  prize_pool: string;
-  eligibility: string; rules: string[]; rounds: { name: string; description: string; date: string }[];
-  coordinators: { name: string; role: string; phone: string; email: string }[];
-  poster_url: string; rulebook_url: string;
-  unstop_url?: string; registration_url?: string;
-  status: string; registration_open: boolean; is_popular: boolean;
-  club_id: string; club_name: string; club_color: string; club_description: string;
+export const revalidate = 0;
+
+async function getEvent(id: string) {
+  try {
+    const result = await db.query(
+      `SELECT
+        e.*,
+        c.id as club_id, c.name as club_name, c.slug as club_slug, c.color as club_color,
+        c.description as club_description
+       FROM events e
+       JOIN clubs c ON e.club_id = c.id
+       WHERE e.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const event = result.rows[0];
+    if (event.status === 'published' && (event.registration_open === null || event.registration_open === false)) {
+      event.registration_open = true;
+    }
+
+    return event;
+  } catch (err) {
+    console.error('Error getting event details:', err);
+    return null;
+  }
 }
 
-interface UserRegistration {
-  id: string; status: string; payment_status: string; amount_paid: number;
-}
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const event = await getEvent(id);
 
-export default function EventDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const { user } = useAuth();
-  const { isInCart, isConfirmed } = useCart();
-
-  const [event, setEvent]   = useState<EventDetail | null>(null);
-  const [myReg, setMyReg]   = useState<UserRegistration | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [regModalOpen, setRegModalOpen] = useState(false);
-
-  useEffect(() => {
-    fetch(`/api/events/${id}`).then(r => r.json()).then(d => {
-      if (d.success) { setEvent(d.data.event); setMyReg(d.data.userRegistration); }
-    }).finally(() => setLoading(false));
-  }, [id]);
-
-  const inCart = isInCart(id);
-  const isConfirmedReg = isConfirmed(id) || myReg?.status === 'CONFIRMED';
-  const isStudent = user?.role === 'student';
-  const isProfileComplete = isStudentProfileComplete(user);
-
-  const handleRegisterClick = () => {
-    if (!user) { router.push(`/auth/login?redirect=/events/${id}`); return; }
-    if (isStudent && !isProfileComplete) {
-      alert('Please complete your platform registration profile before choosing events.');
-      router.push('/dashboard/profile');
-      return;
-    }
-    if (isStudent) {
-      setRegModalOpen(true);
-    }
-  };
-
-  if (loading) return (
-    <div className="min-h-screen bg-[#05030a] pt-28 flex items-center justify-center">
-      <Loader2 size={32} className="animate-spin text-purple-500" />
-    </div>
-  );
-
-  if (!event) return (
-    <div className="min-h-screen bg-[#05030a] pt-28 flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-slate-400 text-lg">Event not found</p>
-        <Link href="/events" className="mt-4 text-purple-400 hover:text-purple-300 underline block">← Back to Events</Link>
-      </div>
-    </div>
-  );
+  if (!event || event.status !== 'published') {
+    notFound();
+  }
 
   const spotsLeft = event.capacity ? event.capacity - event.enrolled : null;
-  const isFull = spotsLeft !== null && spotsLeft <= 0;
   const isTeamEvent = event.max_team_size > 1;
   const teamLabel = isTeamEvent
     ? event.min_team_size === event.max_team_size
       ? `Team of ${event.max_team_size}`
       : `${event.min_team_size}–${event.max_team_size} members`
     : 'Individual';
-
-  const isRegistrationOpen = event.status === 'published' ? (event.registration_open ?? true) : Boolean(event.registration_open);
 
   return (
     <div className="min-h-screen bg-[#05030a] pt-24 pb-20">
@@ -104,7 +62,7 @@ export default function EventDetailPage() {
             src={event.poster_url}
             alt=""
             aria-hidden
-            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-25 scale-125 pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-125 pointer-events-none"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#05030a] via-[#05030a]/70 to-transparent" />
@@ -178,7 +136,7 @@ export default function EventDetailPage() {
             {event.rounds?.length > 0 && (
               <Section title="Event Rounds">
                 <div className="space-y-3">
-                  {event.rounds.map((round, i) => (
+                  {event.rounds.map((round: any, i: number) => (
                     <div key={i} className="flex gap-3">
                       <div className="w-7 h-7 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs font-bold shrink-0">{i + 1}</div>
                       <div>
@@ -203,7 +161,7 @@ export default function EventDetailPage() {
             {event.rules?.length > 0 && (
               <Section title="Rules & Regulations">
                 <ul className="space-y-2">
-                  {event.rules.map((rule, i) => (
+                  {event.rules.map((rule: string, i: number) => (
                     <li key={i} className="flex gap-2.5 text-sm text-slate-300">
                       <span className="text-purple-400 shrink-0 mt-0.5">•</span>
                       {rule}
@@ -223,7 +181,7 @@ export default function EventDetailPage() {
             {event.coordinators?.length > 0 && (
               <Section title="Event Coordinators">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {event.coordinators.map((c, i) => (
+                  {event.coordinators.map((c: any, i: number) => (
                     <div key={i} className="bg-white/3 border border-white/10 rounded-xl p-4">
                       <p className="text-white font-semibold text-sm">{c.name}</p>
                       <p className="text-slate-500 text-xs">{c.role}</p>
@@ -300,89 +258,8 @@ export default function EventDetailPage() {
                   </div>
                 </div>
 
-                {/* Registration Action: Unstop vs Internal */}
-                {(event.unstop_url || event.registration_url) ? (
-                  <div className="space-y-3 mb-2">
-                    <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-slate-300">
-                      <div className="flex items-center gap-1.5 font-bold text-blue-300 mb-1">
-                        <ExternalLink size={13} />
-                        <span>External Unstop Registration</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
-                        This event's registrations and submissions are hosted on <strong>Unstop</strong>. Click below to proceed to the official competition portal.
-                      </p>
-                    </div>
-
-                    <a
-                      href={
-                        (event.unstop_url || event.registration_url || '').startsWith('http')
-                          ? (event.unstop_url || event.registration_url)
-                          : `https://${event.unstop_url || event.registration_url}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 font-bold py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-950/50 transition-all text-sm group"
-                    >
-                      <span>Register on Unstop</span>
-                      <ExternalLink size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </a>
-                  </div>
-                ) : isConfirmedReg ? (
-                  <div className="mb-4 p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold font-mono text-sm flex items-center gap-2">
-                    <CheckCircle size={18} className="text-emerald-400" />
-                    <span>You're registered!</span>
-                  </div>
-                ) : (
-                  (!user || user.role === 'student') && (
-                    <>
-                      <button
-                        onClick={handleRegisterClick}
-                        disabled={isFull || !isRegistrationOpen || (!!user && user.verification_status !== 'verified')}
-                        className={`w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-xl transition-all ${
-                          isFull || !isRegistrationOpen || (!!user && user.verification_status !== 'verified')
-                            ? 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/10'
-                            : inCart && isStudent
-                              ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50'
-                              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-900/30'
-                        }`}
-                      >
-                        {isFull
-                          ? 'Event is Full'
-                          : !isRegistrationOpen
-                            ? 'Registration Closed'
-                            : !user
-                              ? 'Sign in to Register'
-                              : user.verification_status !== 'verified'
-                                ? '⏳ Verification Pending'
-                                : inCart && isStudent
-                                  ? '✓ In Cart'
-                                  : 'Register for Event'}
-                      </button>
-                      {!user && (
-                        <p className="text-slate-600 text-xs text-center mt-2">
-                          <Link href="/auth/login" className="text-purple-400 hover:text-purple-300">Sign in</Link> or{' '}
-                          <Link href="/auth/register" className="text-purple-400 hover:text-purple-300">register</Link> to participate
-                        </p>
-                      )}
-                    </>
-                  )
-                )}
-
-                {/* Admin Mode Notice */}
-                {user && (user.role === 'club_admin' || user.role === 'super_admin') && (
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-center">
-                    <p className="text-purple-300 text-xs font-semibold font-mono">Viewing Event in Admin Mode</p>
-                    <p className="text-slate-500 text-[11px] mt-1">Student registration is disabled for administrator accounts.</p>
-                  </div>
-                )}
-
-                {/* Team / Individual Registration Modal */}
-                <EventRegistrationModal
-                  event={event}
-                  isOpen={regModalOpen}
-                  onClose={() => setRegModalOpen(false)}
-                />
-
+                {/* Client-Side Registration Action Button & Modal */}
+                <EventRegistrationActions event={event} />
 
                 {/* Club info */}
                 <div className="mt-4 pt-4 border-t border-white/10">
