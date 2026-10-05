@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
     const feeStatus = searchParams.get('platform_fee_paid'); // 'true' | 'false'
     const search = searchParams.get('search');
     const rawPage = parseInt(searchParams.get('page') || '1');
-    const rawLimit = parseInt(searchParams.get('limit') || '50');
+    const rawLimit = parseInt(searchParams.get('limit') || '20');
     const page = Math.max(isNaN(rawPage) ? 1 : rawPage, 1);
-    const limit = Math.min(Math.max(isNaN(rawLimit) ? 50 : rawLimit, 1), 100);
+    const limit = Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 100);
     const offset = (page - 1) * limit;
 
     let where = 'WHERE 1=1';
